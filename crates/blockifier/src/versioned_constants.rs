@@ -311,6 +311,7 @@ impl VersionedConstants {
                 (BuiltinName::poseidon, ResourceCost::from_integer(1)),
                 (BuiltinName::output, ResourceCost::from_integer(1)),
                 (BuiltinName::ec_op, ResourceCost::from_integer(1)),
+                (BuiltinName::keccak, ResourceCost::from_integer(1)),
                 (BuiltinName::range_check96, ResourceCost::from_integer(1)),
                 (BuiltinName::add_mod, ResourceCost::from_integer(1)),
                 (BuiltinName::mul_mod, ResourceCost::from_integer(1)),
