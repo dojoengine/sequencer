@@ -131,7 +131,7 @@ where
     }
 
     #[allow(clippy::result_large_err)]
-    fn get_point_by_ptr(
+    pub fn get_point_by_ptr(
         &self,
         ec_point_ptr: Relocatable,
     ) -> SyscallBaseResult<&short_weierstrass::Affine<Curve>> {
