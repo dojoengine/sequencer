@@ -17,7 +17,7 @@ use crate::fee::fee_checks::PostValidationReport;
 use crate::fee::receipt::TransactionReceipt;
 use crate::state::cached_state::CachedState;
 use crate::state::errors::StateError;
-use crate::state::state_api::StateReader;
+use crate::state::state_api::{State, StateReader};
 use crate::transaction::account_transaction::AccountTransaction;
 use crate::transaction::errors::{TransactionExecutionError, TransactionPreValidationError};
 use crate::transaction::transaction_execution::Transaction;
@@ -53,6 +53,21 @@ impl<S: StateReader> StatefulValidator<S> {
         Self { tx_executor }
     }
 
+    /// Perform validations on an account transaction.
+    ///
+    /// # Arguments
+    ///
+    /// * `tx` - The account transaction to validate.
+    /// * `skip_validate` - If true, skip the account validation.
+    /// * `skip_fee_check` - If true, ignore any fee related checks on the transaction and account
+    ///   balance.
+    ///
+    /// NOTE:
+    ///
+    /// We add a flag specifically for avoiding fee checks to allow the pool validator
+    /// in Katana to run in 'fee disabled' mode. Basically, to adapt StatefulValidator to Katana's
+    /// execution flag abstraction (Katana's config that allows running in fee-disabled or
+    /// no-validation mode).
     pub fn perform_validations(
         &mut self,
         tx: AccountTransaction,
@@ -69,16 +84,27 @@ impl<S: StateReader> StatefulValidator<S> {
         let tx_context = self.tx_executor.block_context.to_tx_context(&tx);
         self.perform_pre_validation_stage(&tx, &tx_context)?;
 
-        if skip_validate {
-            return Ok(());
+        if !skip_validate {
+            // `__validate__` call.
+            let (_optional_call_info, actual_cost) =
+                self.validate(&tx, tx_context.initial_sierra_gas().0)?;
+
+            // Post validations.
+            PostValidationReport::verify(&tx_context, &actual_cost)?;
         }
 
-        // `__validate__` call.
-        let (_optional_call_info, actual_cost) =
-            self.validate(&tx, tx_context.initial_sierra_gas().0)?;
-
-        // Post validations.
-        PostValidationReport::verify(&tx_context, &actual_cost)?;
+        // See similar comment in `run_revertible` for context.
+        //
+        // From what I've seen there is not suitable method that is used by both the validator and
+        // the normal transaction flow where the nonce increment logic can be placed. So
+        // this is manually placed here.
+        //
+        // TODO: find a better place to put this without needing this duplication.
+        self.tx_executor
+            .block_state
+            .as_mut()
+            .expect(BLOCK_STATE_ACCESS_ERR)
+            .increment_nonce(tx_context.tx_info.sender_address())?;
 
         Ok(())
     }

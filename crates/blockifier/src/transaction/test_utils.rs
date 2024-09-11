@@ -183,6 +183,12 @@ pub struct FaultyAccountTxCreatorArgs {
     pub validate: bool,
     pub only_query: bool,
     pub charge_fee: bool,
+
+    /// ## Katana patch
+    ///
+    /// Corresponds to the `nonce_check` field in
+    /// [`ExecutionFlags`](crate::transaction::account_transaction::ExecutionFlags)
+    pub nonce_check: bool,
 }
 
 impl Default for FaultyAccountTxCreatorArgs {
@@ -202,6 +208,7 @@ impl Default for FaultyAccountTxCreatorArgs {
             validate: true,
             only_query: false,
             charge_fee: true,
+            nonce_check: true,
         }
     }
 }
@@ -241,6 +248,7 @@ pub fn create_account_tx_for_validate_test(
         validate,
         only_query,
         charge_fee,
+        nonce_check,
     } = faulty_account_tx_creator_args;
 
     // The first felt of the signature is used to set the scenario. If the scenario is
@@ -250,7 +258,7 @@ pub fn create_account_tx_for_validate_test(
         signature_vector.extend(additional_data);
     }
     let signature = TransactionSignature(signature_vector);
-    let execution_flags = ExecutionFlags { validate, charge_fee, only_query };
+    let execution_flags = ExecutionFlags { validate, charge_fee, only_query, nonce_check };
     match tx_type {
         TransactionType::Declare => {
             let declared_contract = match declared_contract {
