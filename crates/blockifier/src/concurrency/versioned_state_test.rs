@@ -5,33 +5,22 @@ use std::thread;
 use assert_matches::assert_matches;
 use rstest::{fixture, rstest};
 use starknet_api::core::{
-    calculate_contract_address,
-    ClassHash,
-    ContractAddress,
-    Nonce,
-    PatriciaKey,
+    calculate_contract_address, ClassHash, ContractAddress, Nonce, PatriciaKey,
 };
 use starknet_api::transaction::{Calldata, ContractAddressSalt, ResourceBoundsMapping};
 use starknet_api::{calldata, class_hash, contract_address, felt, patricia_key};
 
 use crate::abi::abi_utils::{get_fee_token_var_address, get_storage_var_address};
 use crate::concurrency::test_utils::{
-    class_hash,
-    contract_address,
-    safe_versioned_state_for_testing,
+    class_hash, contract_address, safe_versioned_state_for_testing,
 };
 use crate::concurrency::versioned_state::{
-    ThreadSafeVersionedState,
-    VersionedState,
-    VersionedStateProxy,
+    ThreadSafeVersionedState, VersionedState, VersionedStateProxy,
 };
 use crate::concurrency::TxIndex;
 use crate::context::BlockContext;
 use crate::state::cached_state::{
-    CachedState,
-    ContractClassMapping,
-    StateMaps,
-    TransactionalState,
+    CachedState, ContractClassMapping, StateMaps, TransactionalState,
 };
 use crate::state::errors::StateError;
 use crate::state::state_api::{State, StateReader, UpdatableState};
@@ -104,9 +93,11 @@ fn test_versioned_state_proxy() {
         StateError::UndeclaredClassHash(class_hash) if
         another_class_hash == class_hash
     );
-    assert!(
-        !versioned_state_proxys[0].state().declared_contracts.read(0, another_class_hash).unwrap()
-    );
+    assert!(!versioned_state_proxys[0]
+        .state()
+        .declared_contracts
+        .read(0, another_class_hash)
+        .unwrap());
 
     // Write to the state.
     let new_key = storage_key!(0x11_u8);
@@ -174,12 +165,16 @@ fn test_versioned_state_proxy() {
         versioned_state_proxys[9].get_class_hash_at(contract_address).unwrap(),
         class_hash_v7
     );
-    assert!(
-        !versioned_state_proxys[0].state().declared_contracts.read(0, another_class_hash).unwrap()
-    );
-    assert!(
-        versioned_state_proxys[4].state().declared_contracts.read(4, another_class_hash).unwrap()
-    );
+    assert!(!versioned_state_proxys[0]
+        .state()
+        .declared_contracts
+        .read(0, another_class_hash)
+        .unwrap());
+    assert!(versioned_state_proxys[4]
+        .state()
+        .declared_contracts
+        .read(4, another_class_hash)
+        .unwrap());
     // Include the writes in the current transaction.
     assert_eq!(
         versioned_state_proxys[10].get_class_hash_at(contract_address).unwrap(),
@@ -262,11 +257,11 @@ fn test_run_parallel_txs(max_resource_bounds: ResourceBoundsMapping) {
     // Execute transactions
     thread::scope(|s| {
         s.spawn(move || {
-            let result = account_tx_1.execute(&mut state_1, &block_context_1, true, true);
+            let result = account_tx_1.execute(&mut state_1, &block_context_1, true, true, true);
             assert_eq!(result.is_err(), enforce_fee);
         });
         s.spawn(move || {
-            account_tx_2.execute(&mut state_2, &block_context_2, true, true).unwrap();
+            account_tx_2.execute(&mut state_2, &block_context_2, true, true, true).unwrap();
             // Check that the constructor wrote ctor_arg to the storage.
             let storage_key = get_storage_var_address("ctor_arg", &[]);
             let deployed_contract_address = calculate_contract_address(
@@ -322,11 +317,9 @@ fn test_validate_reads(
 
     assert_eq!(transactional_state.cache.borrow().initial_reads.declared_contracts.len(), 1);
 
-    assert!(
-        safe_versioned_state
-            .pin_version(1)
-            .validate_reads(&transactional_state.cache.borrow().initial_reads)
-    );
+    assert!(safe_versioned_state
+        .pin_version(1)
+        .validate_reads(&transactional_state.cache.borrow().initial_reads));
 }
 
 #[rstest]

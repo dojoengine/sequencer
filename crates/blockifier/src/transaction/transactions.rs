@@ -5,15 +5,8 @@ use starknet_api::calldata;
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::transaction::{
-    AccountDeploymentData,
-    Calldata,
-    ContractAddressSalt,
-    DeclareTransactionV2,
-    DeclareTransactionV3,
-    Fee,
-    TransactionHash,
-    TransactionSignature,
-    TransactionVersion,
+    AccountDeploymentData, Calldata, ContractAddressSalt, DeclareTransactionV2,
+    DeclareTransactionV3, Fee, TransactionHash, TransactionSignature, TransactionVersion,
 };
 use starknet_types_core::felt::Felt;
 
@@ -22,10 +15,7 @@ use crate::context::{BlockContext, TransactionContext};
 use crate::execution::call_info::CallInfo;
 use crate::execution::contract_class::{ClassInfo, ContractClass};
 use crate::execution::entry_point::{
-    CallEntryPoint,
-    CallType,
-    ConstructorContext,
-    EntryPointExecutionContext,
+    CallEntryPoint, CallType, ConstructorContext, EntryPointExecutionContext,
 };
 use crate::execution::execution_utils::execute_deployment;
 use crate::state::cached_state::TransactionalState;
@@ -34,14 +24,8 @@ use crate::state::state_api::{State, UpdatableState};
 use crate::transaction::constants;
 use crate::transaction::errors::TransactionExecutionError;
 use crate::transaction::objects::{
-    CommonAccountFields,
-    CurrentTransactionInfo,
-    DeprecatedTransactionInfo,
-    HasRelatedFeeType,
-    TransactionExecutionInfo,
-    TransactionExecutionResult,
-    TransactionInfo,
-    TransactionInfoCreator,
+    CommonAccountFields, CurrentTransactionInfo, DeprecatedTransactionInfo, HasRelatedFeeType,
+    TransactionExecutionInfo, TransactionExecutionResult, TransactionInfo, TransactionInfoCreator,
 };
 use crate::transaction::transaction_utils::{update_remaining_gas, verify_contract_class_version};
 
@@ -62,6 +46,15 @@ pub struct ExecutionFlags {
     pub charge_fee: bool,
     pub validate: bool,
     pub concurrency_mode: bool,
+    /// Whether to validate the transaction nonce.
+    ///
+    /// If `true` and tx nonce != the current nonce, the transaction will be rejected. If
+    /// `false`, the transaction will be accepted if tx nonce >= the current nonce.
+    ///
+    /// This flag mainly used in
+    /// `ExecutableTransaction::execute_raw()` of
+    /// [AccountTransaction](crate::transaction::account_transaction::AccountTransaction::execute_raw).
+    pub nonce_check: bool,
 }
 
 pub trait ExecutableTransaction<U: UpdatableState>: Sized {
@@ -73,10 +66,12 @@ pub trait ExecutableTransaction<U: UpdatableState>: Sized {
         block_context: &BlockContext,
         charge_fee: bool,
         validate: bool,
+        nonce_check: bool,
     ) -> TransactionExecutionResult<TransactionExecutionInfo> {
         log::debug!("Executing Transaction...");
         let mut transactional_state = TransactionalState::create_transactional(state);
-        let execution_flags = ExecutionFlags { charge_fee, validate, concurrency_mode: false };
+        let execution_flags =
+            ExecutionFlags { charge_fee, validate, nonce_check, concurrency_mode: false };
         let execution_result =
             self.execute_raw(&mut transactional_state, block_context, execution_flags);
 
@@ -216,12 +211,34 @@ impl<S: State> Executable<S> for DeclareTransaction {
         _remaining_gas: &mut u64,
     ) -> TransactionExecutionResult<Option<CallInfo>> {
         let class_hash = self.class_hash();
+
+        // This note was imported from the old `dojoengine/blockifier` codebase:
+        //
+        // This discrepancy from upstream is to support declaring legacy contract with minimal
+        // effort as possible. Basically we define the compiled class hash for legacy class
+        // as the same as its class hash. (Legacy contract class are the equivalent of a
+        // compiled sierra contract)
+        //
+        // We perform the same operation for all declaration tx types, prior to this we don't have
+        // to do this, but due to recent changes (at least on blockifier 0.8.0-dev.2) simply setting
+        // the compiled class hash with `state.set_compiled_class_hash` isn't enough (which
+        // was the only changes we've made before to support legacy class. https://github.com/dojoengine/blockifier/blob/57c115864b5d2e9876efe289bd3dfbf05744a76b/crates/blockifier/src/transaction/transactions.rs#L172-L201).
+        // Now we have to also call `state.get_compiled_contract_class` for legacy class as well due
+        // to the changes made by blockifier in the underlying caching system which later
+        // used for computing the state diff.
+        //
+        // If we don't call `state.get_compiled_contract_class` it'd not be able to setup the cache
+        // values properly and will result in an error when trying to declare legacy
+        // contract (the error happens when the state diff is being computed). We should
+        // remove this changes once we completely remove support for legacy contracts in
+        // Katana. For now, we're maintaining this support only for Kakarot.
+
         match &self.tx {
             starknet_api::transaction::DeclareTransaction::V0(_)
             | starknet_api::transaction::DeclareTransaction::V1(_) => {
                 if context.tx_context.block_context.versioned_constants.disable_cairo0_redeclaration
                 {
-                    self.try_declare(state, class_hash, None)?
+                    self.try_declare(state, class_hash, Some(CompiledClassHash(class_hash.0)))?
                 } else {
                     // We allow redeclaration of the class for backward compatibility.
                     // In the past, we allowed redeclaration of Cairo 0 contracts since there was

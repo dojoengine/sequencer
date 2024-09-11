@@ -3,11 +3,7 @@ use regex::Regex;
 use rstest::rstest;
 use starknet_api::core::{calculate_contract_address, Nonce};
 use starknet_api::transaction::{
-    Calldata,
-    ContractAddressSalt,
-    Fee,
-    ResourceBoundsMapping,
-    TransactionSignature,
+    Calldata, ContractAddressSalt, Fee, ResourceBoundsMapping, TransactionSignature,
     TransactionVersion,
 };
 use starknet_api::{calldata, felt};
@@ -21,21 +17,12 @@ use crate::test_utils::initial_test_state::{fund_account, test_state};
 use crate::test_utils::{create_calldata, CairoVersion, BALANCE};
 use crate::transaction::account_transaction::AccountTransaction;
 use crate::transaction::constants::{
-    DEPLOY_CONTRACT_FUNCTION_ENTRY_POINT_NAME,
-    EXECUTE_ENTRY_POINT_NAME,
-    FELT_TRUE,
-    VALIDATE_DECLARE_ENTRY_POINT_NAME,
-    VALIDATE_DEPLOY_ENTRY_POINT_NAME,
-    VALIDATE_ENTRY_POINT_NAME,
+    DEPLOY_CONTRACT_FUNCTION_ENTRY_POINT_NAME, EXECUTE_ENTRY_POINT_NAME, FELT_TRUE,
+    VALIDATE_DECLARE_ENTRY_POINT_NAME, VALIDATE_DEPLOY_ENTRY_POINT_NAME, VALIDATE_ENTRY_POINT_NAME,
 };
 use crate::transaction::test_utils::{
-    account_invoke_tx,
-    block_context,
-    create_account_tx_for_validate_test_nonce_0,
-    max_resource_bounds,
-    run_invoke_tx,
-    FaultyAccountTxCreatorArgs,
-    INVALID,
+    account_invoke_tx, block_context, create_account_tx_for_validate_test_nonce_0,
+    max_resource_bounds, run_invoke_tx, FaultyAccountTxCreatorArgs, INVALID,
 };
 use crate::transaction::transaction_types::TransactionType;
 use crate::transaction::transactions::ExecutableTransaction;
@@ -621,7 +608,7 @@ Execution failed. Failure reason: 0x496e76616c6964207363656e6172696f ('Invalid s
     // Clean pc locations from the trace.
     let re = Regex::new(r"pc=0:[0-9]+").unwrap();
     let cleaned_expected_error = &re.replace_all(&expected_error, "pc=0:*");
-    let actual_error = account_tx.execute(state, block_context, true, true).unwrap_err();
+    let actual_error = account_tx.execute(state, block_context, true, true, true).unwrap_err();
     let actual_error_str = actual_error.to_string();
     let cleaned_actual_error = &re.replace_all(&actual_error_str, "pc=0:*");
     // Compare actual trace to the expected trace (sans pc locations).
@@ -684,7 +671,7 @@ An ASSERT_EQ instruction failed: 1 != 0.
     };
 
     // Compare expected and actual error.
-    let error = deploy_account_tx.execute(state, &block_context, true, true).unwrap_err();
+    let error = deploy_account_tx.execute(state, &block_context, true, true, true).unwrap_err();
     assert_eq!(error.to_string(), expected_error);
 }
 
@@ -816,7 +803,10 @@ Execution failed. Failure reason: 0x496e76616c6964207363656e6172696f ('Invalid s
     };
 
     // Compare expected and actual error.
-    let error =
-        invoke_deploy_tx.execute(state, &block_context, true, true).unwrap().revert_error.unwrap();
+    let error = invoke_deploy_tx
+        .execute(state, &block_context, true, true, true)
+        .unwrap()
+        .revert_error
+        .unwrap();
     assert_eq!(error.to_string(), expected_error);
 }

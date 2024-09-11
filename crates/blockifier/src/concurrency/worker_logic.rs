@@ -16,10 +16,7 @@ use crate::concurrency::versioned_state::ThreadSafeVersionedState;
 use crate::concurrency::TxIndex;
 use crate::context::BlockContext;
 use crate::state::cached_state::{
-    ContractClassMapping,
-    StateChanges,
-    StateMaps,
-    TransactionalState,
+    ContractClassMapping, StateChanges, StateMaps, TransactionalState,
 };
 use crate::state::state_api::{StateReader, UpdatableState};
 use crate::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};
@@ -129,8 +126,12 @@ impl<'a, S: StateReader> WorkerExecutor<'a, S> {
         let tx = &self.chunk[tx_index];
         let mut transactional_state =
             TransactionalState::create_transactional(&mut tx_versioned_state);
-        let execution_flags =
-            ExecutionFlags { charge_fee: true, validate: true, concurrency_mode: true };
+        let execution_flags = ExecutionFlags {
+            charge_fee: true,
+            validate: true,
+            concurrency_mode: true,
+            nonce_check: true,
+        };
         let execution_result =
             tx.execute_raw(&mut transactional_state, self.block_context, execution_flags);
 

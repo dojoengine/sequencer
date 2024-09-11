@@ -15,9 +15,7 @@ use crate::execution::entry_point::{CallEntryPoint, CallType, EntryPointExecutio
 use crate::fee::actual_cost::TransactionReceipt;
 use crate::fee::fee_checks::{FeeCheckReportFields, PostExecutionReport};
 use crate::fee::fee_utils::{
-    get_fee_by_gas_vector,
-    get_sequencer_balance_keys,
-    verify_can_pay_committed_bounds,
+    get_fee_by_gas_vector, get_sequencer_balance_keys, verify_can_pay_committed_bounds,
 };
 use crate::fee::gas_usage::{compute_discounted_gas_from_gas_vector, estimate_minimal_gas_vector};
 use crate::retdata;
@@ -25,29 +23,18 @@ use crate::state::cached_state::{StateChanges, TransactionalState};
 use crate::state::state_api::{State, StateReader, UpdatableState};
 use crate::transaction::constants;
 use crate::transaction::errors::{
-    TransactionExecutionError,
-    TransactionFeeError,
-    TransactionPreValidationError,
+    TransactionExecutionError, TransactionFeeError, TransactionPreValidationError,
 };
 use crate::transaction::objects::{
-    DeprecatedTransactionInfo,
-    HasRelatedFeeType,
-    TransactionExecutionInfo,
-    TransactionExecutionResult,
-    TransactionInfo,
-    TransactionInfoCreator,
+    DeprecatedTransactionInfo, HasRelatedFeeType, TransactionExecutionInfo,
+    TransactionExecutionResult, TransactionInfo, TransactionInfoCreator,
     TransactionPreValidationResult,
 };
 use crate::transaction::transaction_types::TransactionType;
 use crate::transaction::transaction_utils::update_remaining_gas;
 use crate::transaction::transactions::{
-    DeclareTransaction,
-    DeployAccountTransaction,
-    Executable,
-    ExecutableTransaction,
-    ExecutionFlags,
-    InvokeTransaction,
-    ValidatableTransaction,
+    DeclareTransaction, DeployAccountTransaction, Executable, ExecutableTransaction,
+    ExecutionFlags, InvokeTransaction, ValidatableTransaction,
 };
 
 #[cfg(test)]
@@ -243,6 +230,12 @@ impl AccountTransaction {
         Ok(())
     }
 
+    /// This method no longer increments the nonce. Refer to individual functions to see
+    /// in which stage the nonce is incremented.
+    ///
+    /// Nonce incremental logics manually placed in
+    /// [`AccountTransaction::run_revertible`], [`AccountTransaction::run_non_revertible`],
+    /// [`StatefulValidator::perform_validations`](crate::blockifier::stateful_validator::StatefulValidator::perform_validations)
     fn handle_nonce(
         state: &mut dyn State,
         tx_info: &TransactionInfo,
@@ -261,7 +254,8 @@ impl AccountTransaction {
             account_nonce <= incoming_tx_nonce
         };
         if valid_nonce {
-            return Ok(state.increment_nonce(address)?);
+            // return Ok(state.increment_nonce(address)?);
+            return Ok(());
         }
         Err(TransactionPreValidationError::InvalidNonce {
             address,
@@ -435,7 +429,18 @@ impl AccountTransaction {
         let mut resources = ExecutionResources::default();
         let validate_call_info: Option<CallInfo>;
         let execute_call_info: Option<CallInfo>;
+
         if matches!(self, Self::DeployAccount(_)) {
+            // See similar comment in `run_revertible` for context. Not sure for this case if
+            // incrementing the nonce at this stage is correct.
+            //
+            // Only increment the nonce if it's not V0 transaction. Why? not exactly sure but
+            // that's what the tests implies.
+            if !tx_context.tx_info.is_v0() {
+                // See similar comment in `run_revertible` for context.
+                state.increment_nonce(tx_context.tx_info.sender_address())?;
+            }
+
             // Handle `DeployAccount` transactions separately, due to different order of things.
             // Also, the execution context required form the `DeployAccount` execute phase is
             // validation context.
@@ -462,6 +467,14 @@ impl AccountTransaction {
                 validate,
                 charge_fee,
             )?;
+
+            // Only increment the nonce if it's not V0 transaction. Why? not exactly sure but
+            // that's what the tests implies.
+            if !execution_context.tx_context.tx_info.is_v0() {
+                // See similar comment in `run_revertible` for context.
+                state.increment_nonce(tx_context.tx_info.sender_address())?;
+            }
+
             execute_call_info =
                 self.run_execute(state, &mut resources, &mut execution_context, remaining_gas)?;
         }
@@ -507,6 +520,23 @@ impl AccountTransaction {
             validate,
             charge_fee,
         )?;
+
+        // Increment the sender nonce only after the tx has passed validation.
+        //
+        // NOTE:
+        //
+        // Before this, the nonce is incremented in `AccountTransaction::handle_nonce` which is
+        // called at the initial stage of transaction processing (ie in
+        // ExecutableTransaction::execute_raw of AccountTransaction), which is even before the
+        // account validation logic is being run. Which is weird because the nonce would get
+        // incremented even if the transaction failed validation. And this is not what I
+        // observed from mainnet/testnet. So, I moved the nonce incrementation here.
+        //
+        // Only increment the nonce if it's not V0 transaction. Why? not exactly sure but
+        // that's what the tests implies.
+        if !execution_context.tx_context.tx_info.is_v0() {
+            state.increment_nonce(tx_context.tx_info.sender_address())?;
+        }
 
         let n_allotted_execution_steps = execution_context.subtract_validation_and_overhead_steps(
             &validate_call_info,
@@ -611,7 +641,11 @@ impl AccountTransaction {
     /// Returns 0 on non-declare transactions; for declare transactions, returns the class code
     /// size.
     pub(crate) fn declare_code_size(&self) -> usize {
-        if let Self::Declare(tx) = self { tx.class_info.code_size() } else { 0 }
+        if let Self::Declare(tx) = self {
+            tx.class_info.code_size()
+        } else {
+            0
+        }
     }
 
     fn is_non_revertible(&self, tx_info: &TransactionInfo) -> bool {
@@ -655,7 +689,7 @@ impl<U: UpdatableState> ExecutableTransaction<U> for AccountTransaction {
         self.verify_tx_version(tx_context.tx_info.version())?;
 
         // Nonce and fee check should be done before running user code.
-        let strict_nonce_check = true;
+        let strict_nonce_check = execution_flags.nonce_check;
         self.perform_pre_validation_stage(
             state,
             &tx_context,

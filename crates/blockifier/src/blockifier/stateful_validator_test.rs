@@ -9,11 +9,8 @@ use crate::test_utils::initial_test_state::{fund_account, test_state};
 use crate::test_utils::{CairoVersion, BALANCE};
 use crate::transaction::account_transaction::AccountTransaction;
 use crate::transaction::test_utils::{
-    block_context,
-    create_account_tx_for_validate_test_nonce_0,
-    FaultyAccountTxCreatorArgs,
-    INVALID,
-    VALID,
+    block_context, create_account_tx_for_validate_test_nonce_0, FaultyAccountTxCreatorArgs,
+    INVALID, VALID,
 };
 use crate::transaction::transaction_types::TransactionType;
 
@@ -69,7 +66,7 @@ fn test_transaction_validator(
     // Test the stateful validator.
     let mut stateful_validator = StatefulValidator::create(state, block_context);
 
-    let result = stateful_validator.perform_validations(tx, false);
+    let result = stateful_validator.perform_validations(tx, false, false);
     assert!(result.is_ok(), "Validation failed: {:?}", result.unwrap_err());
 }
 
@@ -92,6 +89,6 @@ fn test_transaction_validator_skip_validate() {
 
     let mut stateful_validator = StatefulValidator::create(state, block_context);
     // The transaction validations should be skipped and the function should return Ok.
-    let result = stateful_validator.perform_validations(tx, true);
+    let result = stateful_validator.perform_validations(tx, true, false);
     assert_matches!(result, Ok(()));
 }

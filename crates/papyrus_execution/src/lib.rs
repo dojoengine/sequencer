@@ -31,16 +31,12 @@ use blockifier::context::{BlockContext, ChainInfo, FeeTokenAddresses, Transactio
 use blockifier::execution::call_info::CallExecution;
 use blockifier::execution::contract_class::{ClassInfo, ContractClass as BlockifierContractClass};
 use blockifier::execution::entry_point::{
-    CallEntryPoint,
-    CallType as BlockifierCallType,
-    EntryPointExecutionContext,
+    CallEntryPoint, CallType as BlockifierCallType, EntryPointExecutionContext,
 };
 use blockifier::state::cached_state::CachedState;
 use blockifier::transaction::errors::TransactionExecutionError as BlockifierTransactionExecutionError;
 use blockifier::transaction::objects::{
-    DeprecatedTransactionInfo,
-    TransactionExecutionInfo,
-    TransactionInfo,
+    DeprecatedTransactionInfo, TransactionExecutionInfo, TransactionInfo,
 };
 use blockifier::transaction::transaction_execution::Transaction as BlockifierTransaction;
 use blockifier::transaction::transactions::ExecutableTransaction;
@@ -63,23 +59,13 @@ use starknet_api::core::{ChainId, ClassHash, ContractAddress, EntryPointSelector
 use starknet_api::data_availability::L1DataAvailabilityMode;
 // TODO: merge multiple EntryPointType structs in SN_API into one.
 use starknet_api::deprecated_contract_class::{
-    ContractClass as DeprecatedContractClass,
-    EntryPointType,
+    ContractClass as DeprecatedContractClass, EntryPointType,
 };
 use starknet_api::state::{StateNumber, ThinStateDiff};
 use starknet_api::transaction::{
-    Calldata,
-    DeclareTransaction,
-    DeclareTransactionV0V1,
-    DeclareTransactionV2,
-    DeclareTransactionV3,
-    DeployAccountTransaction,
-    Fee,
-    InvokeTransaction,
-    L1HandlerTransaction,
-    Transaction,
-    TransactionHash,
-    TransactionVersion,
+    Calldata, DeclareTransaction, DeclareTransactionV0V1, DeclareTransactionV2,
+    DeclareTransactionV3, DeployAccountTransaction, Fee, InvokeTransaction, L1HandlerTransaction,
+    Transaction, TransactionHash, TransactionVersion,
 };
 use starknet_api::{contract_address, felt, patricia_key, StarknetApiError};
 use state_reader::ExecutionStateReader;
@@ -660,8 +646,13 @@ fn execute_transactions(
             _ => None,
         };
         let blockifier_tx = to_blockifier_tx(tx, tx_hash, transaction_index)?;
-        let tx_execution_info_result =
-            blockifier_tx.execute(&mut transactional_state, &block_context, charge_fee, validate);
+        let tx_execution_info_result = blockifier_tx.execute(
+            &mut transactional_state,
+            &block_context,
+            charge_fee,
+            validate,
+            true,
+        );
         let state_diff =
             induced_state_diff(&mut transactional_state, deprecated_declared_class_hash)?;
         transactional_state.commit();

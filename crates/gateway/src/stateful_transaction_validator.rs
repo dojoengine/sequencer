@@ -46,7 +46,7 @@ impl StatefulTransactionValidatorTrait for BlockifierStatefulValidator {
         account_tx: AccountTransaction,
         skip_validate: bool,
     ) -> StatefulTransactionValidatorResult<()> {
-        Ok(self.perform_validations(account_tx, skip_validate)?)
+        Ok(self.perform_validations(account_tx, skip_validate, false)?)
     }
 
     fn get_nonce(&mut self, account_address: ContractAddress) -> StatefulValidatorResult<Nonce> {
