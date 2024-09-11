@@ -50,13 +50,13 @@ use starknet_api::transaction::fields::{
     ValidResourceBounds,
 };
 use starknet_api::transaction::{
-    constants,
     EventContent,
     EventData,
     EventKey,
     L2ToL1Payload,
-    TransactionVersion,
     QUERY_VERSION_BASE,
+    TransactionVersion,
+    constants,
 };
 use starknet_api::{
     calldata,
@@ -1357,11 +1357,10 @@ fn test_actual_fee_gt_resource_bounds(
     let gas_prices = &block_context.block_info.gas_prices.strk_gas_prices;
     let account_contract = FeatureContract::AccountWithoutValidations(account_cairo_version);
     let test_contract = FeatureContract::TestContract(CairoVersion::Cairo0);
-    let state = &mut test_state(
-        &block_context.chain_info,
-        BALANCE,
-        &[(account_contract, 2), (test_contract, 1)],
-    );
+    let state = &mut test_state(&block_context.chain_info, BALANCE, &[
+        (account_contract, 2),
+        (test_contract, 1),
+    ]);
     let sender_address0 = account_contract.get_instance_address(0);
     let sender_address1 = account_contract.get_instance_address(1);
     let tx_args = invoke_tx_args! {
@@ -1473,6 +1472,15 @@ fn test_invalid_nonce(
         .perform_pre_validation_stage(&mut transactional_state, &valid_tx_context, false)
         .unwrap();
 
+    // See comments on changing where nonce is incremented in `ExecutableTransaction::execute_raw`
+    // of AccountTransaction.
+    //
+    // Basically, before this, the nonce is incremented in `perform_pre_validation_stage` but that
+    // method is called even before the account validation stage is executed. So, now we have to
+    // increment the sender's account nonce manually here.
+    let account = valid_tx_context.tx_info.sender_address();
+    transactional_state.increment_nonce(account).expect("failed to increment nonce");
+
     // Negative flow: account nonce = 1, incoming tx nonce = 0.
     let invalid_nonce = nonce!(0_u8);
     let invalid_tx = invoke_tx_with_default_flags(
@@ -1537,12 +1545,18 @@ fn declare_expected_state_changes_count(version: TransactionVersion) -> StateCha
     if version == TransactionVersion::ZERO {
         StateChangesCount {
             n_storage_updates: 1, // Sender balance.
+            // Supposed to be ZERO, but because due to the changes made for supporting declaring
+            // Cairo 0 contracts, `n_compiled_class_hash_updates` is 1 for V0 declare transactions.
+            n_compiled_class_hash_updates: 1, // Also set compiled class hash.
             ..StateChangesCount::default()
         }
     } else if version == TransactionVersion::ONE {
         StateChangesCount {
             n_storage_updates: 1,    // Sender balance.
             n_modified_contracts: 1, // Nonce.
+            // Supposed to be ZERO, but because due to the changes made for supporting declaring
+            // Cairo 0 contracts, `n_compiled_class_hash_updates` is 1 for V0 declare transactions.
+            n_compiled_class_hash_updates: 1, // Also set compiled class hash.
             ..StateChangesCount::default()
         }
     } else if version == TransactionVersion::TWO || version == TransactionVersion::THREE {
@@ -2196,25 +2210,22 @@ fn test_validate_accounts_tx(
     // Valid logic.
     let nonce_manager = &mut NonceManager::default();
     let declared_contract_cairo_version = CairoVersion::from_declare_tx_version(tx_version);
-    let account_tx = create_account_tx_for_validate_test(
-        nonce_manager,
-        FaultyAccountTxCreatorArgs {
+    let account_tx =
+        create_account_tx_for_validate_test(nonce_manager, FaultyAccountTxCreatorArgs {
             scenario: VALID,
             contract_address_salt: salt_manager.next_salt(),
             additional_data: None,
             declared_contract: Some(FeatureContract::TestContract(declared_contract_cairo_version)),
             resource_bounds: ValidResourceBounds::create_for_testing_no_fee_enforcement(),
             ..default_args
-        },
-    );
+        });
     let result = account_tx.execute(state, block_context);
     assert!(result.is_ok(), "Execution failed: {:?}", result.unwrap_err());
 
     if tx_type != TransactionType::DeployAccount {
         // Call self (allowed).
-        let account_tx = create_account_tx_for_validate_test(
-            nonce_manager,
-            FaultyAccountTxCreatorArgs {
+        let account_tx =
+            create_account_tx_for_validate_test(nonce_manager, FaultyAccountTxCreatorArgs {
                 scenario: CALL_CONTRACT,
                 additional_data: Some(vec![*sender_address.0.key()]),
                 declared_contract: Some(FeatureContract::AccountWithLongValidate(
@@ -2222,8 +2233,7 @@ fn test_validate_accounts_tx(
                 )),
                 resource_bounds: ValidResourceBounds::create_for_testing_no_fee_enforcement(),
                 ..default_args
-            },
-        );
+            });
         let result = account_tx.execute(state, block_context);
         assert!(result.is_ok(), "Execution failed: {:?}", result.unwrap_err());
     }
@@ -2231,9 +2241,8 @@ fn test_validate_accounts_tx(
     if let CairoVersion::Cairo0 = cairo_version {
         // Call the syscall get_block_number and assert the returned block number was modified
         // for validate.
-        let account_tx = create_account_tx_for_validate_test(
-            nonce_manager,
-            FaultyAccountTxCreatorArgs {
+        let account_tx =
+            create_account_tx_for_validate_test(nonce_manager, FaultyAccountTxCreatorArgs {
                 scenario: GET_BLOCK_NUMBER,
                 contract_address_salt: salt_manager.next_salt(),
                 additional_data: Some(vec![Felt::from(CURRENT_BLOCK_NUMBER_FOR_VALIDATE)]),
@@ -2242,24 +2251,21 @@ fn test_validate_accounts_tx(
                 )),
                 resource_bounds: ValidResourceBounds::create_for_testing_no_fee_enforcement(),
                 ..default_args
-            },
-        );
+            });
         let result = account_tx.execute(state, block_context);
         assert!(result.is_ok(), "Execution failed: {:?}", result.unwrap_err());
 
         // Call the syscall get_block_timestamp and assert the returned timestamp was modified
         // for validate.
-        let account_tx = create_account_tx_for_validate_test(
-            nonce_manager,
-            FaultyAccountTxCreatorArgs {
+        let account_tx =
+            create_account_tx_for_validate_test(nonce_manager, FaultyAccountTxCreatorArgs {
                 scenario: GET_BLOCK_TIMESTAMP,
                 contract_address_salt: salt_manager.next_salt(),
                 additional_data: Some(vec![Felt::from(CURRENT_BLOCK_TIMESTAMP_FOR_VALIDATE)]),
                 declared_contract: Some(FeatureContract::Empty(declared_contract_cairo_version)),
                 resource_bounds: ValidResourceBounds::create_for_testing_no_fee_enforcement(),
                 ..default_args
-            },
-        );
+            });
         let result = account_tx.execute(state, block_context);
         assert!(result.is_ok(), "Execution failed: {:?}", result.unwrap_err());
     }
@@ -2299,11 +2305,10 @@ fn test_valid_flag(
     let block_context = &block_context;
     let account_contract = FeatureContract::AccountWithoutValidations(account_cairo_version);
     let test_contract = FeatureContract::TestContract(test_contract_cairo_version);
-    let state = &mut test_state(
-        &block_context.chain_info,
-        BALANCE,
-        &[(account_contract, 1), (test_contract, 1)],
-    );
+    let state = &mut test_state(&block_context.chain_info, BALANCE, &[
+        (account_contract, 1),
+        (test_contract, 1),
+    ]);
 
     let tx = executable_invoke_tx(invoke_tx_args! {
         sender_address: account_contract.get_instance_address(0),

@@ -32,12 +32,7 @@ use crate::test_utils::contracts::FeatureContract;
 use crate::test_utils::dict_state_reader::DictStateReader;
 use crate::test_utils::initial_test_state::test_state;
 use crate::test_utils::{
-    create_calldata,
-    create_trivial_calldata,
-    get_syscall_resources,
-    get_tx_resources,
-    CairoVersion,
-    BALANCE,
+    create_calldata, create_trivial_calldata, get_syscall_resources, get_tx_resources, CairoVersion, BALANCE
 };
 use crate::transaction::account_transaction::{AccountTransaction, ExecutionFlags};
 use crate::transaction::errors::{
@@ -49,8 +44,7 @@ use crate::transaction::objects::{TransactionExecutionInfo, TransactionExecution
 use crate::transaction::test_utils::{
     default_l1_resource_bounds,
     invoke_tx_with_default_flags,
-    l1_resource_bounds,
-    INVALID,
+    l1_resource_bounds, INVALID,
 };
 use crate::transaction::transaction_types::TransactionType;
 use crate::transaction::transactions::ExecutableTransaction;
@@ -73,11 +67,11 @@ fn create_flavors_test_state(
     let test_contract = FeatureContract::TestContract(cairo_version);
     let account_contract = FeatureContract::AccountWithoutValidations(cairo_version);
     let faulty_account_contract = FeatureContract::FaultyAccount(cairo_version);
-    let state = test_state(
-        chain_info,
-        BALANCE,
-        &[(account_contract, 1), (faulty_account_contract, 1), (test_contract, 1)],
-    );
+    let state = test_state(chain_info, BALANCE, &[
+        (account_contract, 1),
+        (faulty_account_contract, 1),
+        (test_contract, 1),
+    ]);
     FlavorTestInitialState {
         state,
         account_address: account_contract.get_instance_address(0),
@@ -175,11 +169,9 @@ fn check_gas_and_fee(
 }
 
 fn recurse_calldata(contract_address: ContractAddress, fail: bool, depth: u32) -> Calldata {
-    create_calldata(
-        contract_address,
-        if fail { "recursive_fail" } else { "recurse" },
-        &[felt!(depth)],
-    )
+    create_calldata(contract_address, if fail { "recursive_fail" } else { "recurse" }, &[felt!(
+        depth
+    )])
 }
 
 // Helper function to get the arguments for the pre-validation tests.
@@ -226,7 +218,7 @@ fn test_invalid_nonce_pre_validate(
     let account_nonce = state.get_nonce_at(account_address).unwrap();
     let tx =
         executable_invoke_tx(invoke_tx_args! {nonce: invalid_nonce, ..pre_validation_base_args});
-    let execution_flags = ExecutionFlags { only_query, charge_fee, validate };
+    let execution_flags = ExecutionFlags { only_query, charge_fee, validate, nonce_check: true };
     let account_tx = AccountTransaction { tx, execution_flags };
     let result = account_tx.execute(&mut state, &block_context);
     assert_matches!(
@@ -311,7 +303,7 @@ fn test_simulate_validate_pre_validate_with_charge_fee(
     });
     let account_tx = AccountTransaction {
         tx,
-        execution_flags: ExecutionFlags { only_query, charge_fee, validate },
+        execution_flags: ExecutionFlags { only_query, charge_fee, validate, nonce_check: true },
     };
     let result = account_tx.execute(&mut state, &block_context);
 
@@ -347,7 +339,7 @@ fn test_simulate_validate_pre_validate_with_charge_fee(
         });
         let account_tx = AccountTransaction {
             tx,
-            execution_flags: ExecutionFlags { only_query, charge_fee, validate },
+            execution_flags: ExecutionFlags { only_query, charge_fee, validate, nonce_check: true },
         };
         let err = account_tx.execute(&mut state, &block_context).unwrap_err();
 
@@ -388,7 +380,12 @@ fn test_simulate_validate_pre_validate_not_charge_fee(
     });
     let account_tx = AccountTransaction {
         tx,
-        execution_flags: ExecutionFlags { only_query, charge_fee, validate: false },
+        execution_flags: ExecutionFlags {
+            only_query,
+            charge_fee,
+            validate: false,
+            nonce_check: true,
+        },
     };
     let tx_execution_info = account_tx.execute(&mut state, &block_context).unwrap();
     let base_gas = calculate_actual_gas(&tx_execution_info, &block_context, false);
@@ -413,7 +410,12 @@ fn test_simulate_validate_pre_validate_not_charge_fee(
             });
             let account_tx = AccountTransaction {
                 tx,
-                execution_flags: ExecutionFlags { only_query, charge_fee, validate },
+                execution_flags: ExecutionFlags {
+                    only_query,
+                    charge_fee,
+                    validate,
+                    nonce_check: true,
+                },
             };
             let tx_execution_info = account_tx.execute(&mut state, &block_context).unwrap();
             check_gas_and_fee(
@@ -482,7 +484,7 @@ fn execute_fail_validation(
     });
     let account_tx = AccountTransaction {
         tx,
-        execution_flags: ExecutionFlags { only_query, charge_fee, validate },
+        execution_flags: ExecutionFlags { only_query, charge_fee, validate, nonce_check: true },
     };
     account_tx.execute(&mut falliable_state, &block_context)
 }
@@ -606,7 +608,7 @@ fn test_simulate_validate_charge_fee_mid_execution(
     });
     let account_tx = AccountTransaction {
         tx,
-        execution_flags: ExecutionFlags { only_query, charge_fee, validate },
+        execution_flags: ExecutionFlags { only_query, charge_fee, validate, nonce_check: true },
     };
     let tx_execution_info = account_tx.execute(&mut state, &block_context).unwrap();
     let base_gas = calculate_actual_gas(&tx_execution_info, &block_context, validate);
@@ -657,7 +659,7 @@ fn test_simulate_validate_charge_fee_mid_execution(
     });
     let account_tx = AccountTransaction {
         tx,
-        execution_flags: ExecutionFlags { only_query, charge_fee, validate },
+        execution_flags: ExecutionFlags { only_query, charge_fee, validate, nonce_check: true },
     };
     let tx_execution_info = account_tx.execute(&mut state, &block_context).unwrap();
     assert_eq!(tx_execution_info.is_reverted(), charge_fee);
@@ -714,7 +716,7 @@ fn test_simulate_validate_charge_fee_mid_execution(
     });
     let account_tx = AccountTransaction {
         tx,
-        execution_flags: ExecutionFlags { only_query, charge_fee, validate },
+        execution_flags: ExecutionFlags { only_query, charge_fee, validate, nonce_check: true },
     };
     let tx_execution_info = account_tx.execute(&mut state, &low_step_block_context).unwrap();
     assert!(
@@ -803,7 +805,7 @@ fn test_simulate_validate_charge_fee_post_execution(
     });
     let account_tx = AccountTransaction {
         tx,
-        execution_flags: ExecutionFlags { only_query, charge_fee, validate },
+        execution_flags: ExecutionFlags { only_query, charge_fee, validate, nonce_check: true },
     };
     let tx_execution_info = account_tx.execute(&mut state, &block_context).unwrap();
     assert_eq!(tx_execution_info.is_reverted(), charge_fee);
@@ -865,7 +867,7 @@ fn test_simulate_validate_charge_fee_post_execution(
     });
     let account_tx = AccountTransaction {
         tx,
-        execution_flags: ExecutionFlags { only_query, charge_fee, validate },
+        execution_flags: ExecutionFlags { only_query, charge_fee, validate, nonce_check: true },
     };
     let tx_execution_info = account_tx.execute(&mut state, &block_context).unwrap();
     assert_eq!(tx_execution_info.is_reverted(), charge_fee);
