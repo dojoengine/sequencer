@@ -23,6 +23,7 @@ use starknet_api::{
     storage_key,
 };
 
+use crate::concurrency::TxIndex;
 use crate::concurrency::test_utils::{
     class_hash,
     contract_address,
@@ -33,7 +34,6 @@ use crate::concurrency::versioned_state::{
     ThreadSafeVersionedState,
     VersionedStateProxy,
 };
-use crate::concurrency::TxIndex;
 use crate::context::BlockContext;
 use crate::state::cached_state::{
     CachedState,
