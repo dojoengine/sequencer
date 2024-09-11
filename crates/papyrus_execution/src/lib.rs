@@ -47,11 +47,12 @@ use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use cairo_vm::types::builtin_name::BuiltinName;
 use execution_utils::{get_trace_constructor, induced_state_diff};
 use objects::{PriceUnit, TransactionSimulationOutput};
-use papyrus_config::dumping::{ser_param, SerializeConfig};
+use papyrus_config::dumping::{SerializeConfig, ser_param};
 use papyrus_config::{ParamPath, ParamPrivacyInput, SerializedParam};
 use papyrus_storage::header::HeaderStorageReader;
 use papyrus_storage::{StorageError, StorageReader};
 use serde::{Deserialize, Serialize};
+use starknet_api::StarknetApiError;
 use starknet_api::block::{
     BlockHashAndNumber,
     BlockInfo,
@@ -80,12 +81,11 @@ use starknet_api::transaction::{
     TransactionVersion,
 };
 use starknet_api::transaction_hash::get_transaction_hash;
-use starknet_api::StarknetApiError;
 use starknet_types_core::felt::Felt;
 use state_reader::ExecutionStateReader;
 use tracing::trace;
 
-use crate::objects::{tx_execution_output_to_fee_estimation, FeeEstimation, PendingData};
+use crate::objects::{FeeEstimation, PendingData, tx_execution_output_to_fee_estimation};
 
 /// The address of the STRK fee contract on Starknet.
 const STRK_FEE_CONTRACT_ADDRESS_STR: &str =
@@ -739,7 +739,10 @@ fn execute_transactions(
             ) => Some(*class_hash),
             _ => None,
         };
-        let blockifier_tx = to_blockifier_tx(tx, tx_hash, transaction_index, charge_fee, validate)?;
+
+        let nonce_check = true;
+        let blockifier_tx =
+            to_blockifier_tx(tx, tx_hash, transaction_index, charge_fee, validate, nonce_check)?;
         // TODO(Yoni): use the TransactionExecutor instead.
         let tx_execution_info_result =
             blockifier_tx.execute(&mut transactional_state, &block_context);
@@ -803,12 +806,13 @@ fn to_blockifier_tx(
     transaction_index: usize,
     charge_fee: bool,
     validate: bool,
+    nonce_check: bool,
 ) -> ExecutionResult<BlockifierTransaction> {
     // TODO(yair): support only_query version bit (enable in the RPC v0.6 and use the correct
     // value).
     match tx {
         ExecutableTransactionInput::Invoke(invoke_tx, only_query) => {
-            let execution_flags = ExecutionFlags { only_query, charge_fee, validate };
+            let execution_flags = ExecutionFlags { only_query, charge_fee, validate, nonce_check };
             BlockifierTransaction::from_api(
                 Transaction::Invoke(invoke_tx),
                 tx_hash,
@@ -821,7 +825,7 @@ fn to_blockifier_tx(
         }
 
         ExecutableTransactionInput::DeployAccount(deploy_acc_tx, only_query) => {
-            let execution_flags = ExecutionFlags { only_query, charge_fee, validate };
+            let execution_flags = ExecutionFlags { only_query, charge_fee, validate, nonce_check };
             BlockifierTransaction::from_api(
                 Transaction::DeployAccount(deploy_acc_tx),
                 tx_hash,
@@ -850,7 +854,7 @@ fn to_blockifier_tx(
                 err,
             })?;
 
-            let execution_flags = ExecutionFlags { only_query, charge_fee, validate };
+            let execution_flags = ExecutionFlags { only_query, charge_fee, validate, nonce_check };
             BlockifierTransaction::from_api(
                 Transaction::Declare(DeclareTransaction::V0(declare_tx)),
                 tx_hash,
@@ -877,7 +881,7 @@ fn to_blockifier_tx(
                 tx: DeclareTransaction::V1(declare_tx.clone()),
                 err,
             })?;
-            let execution_flags = ExecutionFlags { only_query, charge_fee, validate };
+            let execution_flags = ExecutionFlags { only_query, charge_fee, validate, nonce_check };
             BlockifierTransaction::from_api(
                 Transaction::Declare(DeclareTransaction::V1(declare_tx)),
                 tx_hash,
@@ -906,7 +910,7 @@ fn to_blockifier_tx(
                 tx: DeclareTransaction::V2(declare_tx.clone()),
                 err,
             })?;
-            let execution_flags = ExecutionFlags { only_query, charge_fee, validate };
+            let execution_flags = ExecutionFlags { only_query, charge_fee, validate, nonce_check };
             BlockifierTransaction::from_api(
                 Transaction::Declare(DeclareTransaction::V2(declare_tx)),
                 tx_hash,
@@ -935,7 +939,7 @@ fn to_blockifier_tx(
                 tx: DeclareTransaction::V3(declare_tx.clone()),
                 err,
             })?;
-            let execution_flags = ExecutionFlags { only_query, charge_fee, validate };
+            let execution_flags = ExecutionFlags { only_query, charge_fee, validate, nonce_check };
             BlockifierTransaction::from_api(
                 Transaction::Declare(DeclareTransaction::V3(declare_tx)),
                 tx_hash,
@@ -947,7 +951,7 @@ fn to_blockifier_tx(
             .map_err(|err| ExecutionError::from((transaction_index, err)))
         }
         ExecutableTransactionInput::L1Handler(l1_handler_tx, paid_fee, only_query) => {
-            let execution_flags = ExecutionFlags { only_query, charge_fee, validate };
+            let execution_flags = ExecutionFlags { only_query, charge_fee, validate, nonce_check };
             BlockifierTransaction::from_api(
                 Transaction::L1Handler(l1_handler_tx),
                 tx_hash,

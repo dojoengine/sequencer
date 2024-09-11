@@ -19,7 +19,7 @@ use starknet_api::transaction::fields::{
     TransactionSignature,
     ValidResourceBounds,
 };
-use starknet_api::transaction::{constants, TransactionHash, TransactionVersion};
+use starknet_api::transaction::{TransactionHash, TransactionVersion, constants};
 use starknet_types_core::felt::Felt;
 
 use crate::context::{BlockContext, GasCounter, TransactionContext};
@@ -33,9 +33,9 @@ use crate::execution::entry_point::{
     SierraGasRevertTracker,
 };
 use crate::execution::stack_trace::{
+    Cairo1RevertHeader,
     extract_trailing_cairo1_revert_trace,
     gen_tx_execution_error_trace,
-    Cairo1RevertHeader,
 };
 use crate::fee::fee_checks::{FeeCheckReportFields, PostExecutionReport};
 use crate::fee::fee_utils::{
@@ -90,11 +90,23 @@ pub struct ExecutionFlags {
     pub only_query: bool,
     pub charge_fee: bool,
     pub validate: bool,
+
+    /// ## Katana patch
+    ///
+    /// Whether to validate the transaction nonce.
+    ///
+    /// If `true` and tx nonce != the current nonce, the transaction will be rejected. If
+    /// `false`, the transaction will be accepted if tx nonce >= the current nonce.
+    ///
+    /// This flag mainly used in
+    /// `ExecutableTransaction::execute_raw()` of
+    /// [AccountTransaction](crate::transaction::account_transaction::AccountTransaction::execute_raw).
+    pub nonce_check: bool,
 }
 
 impl Default for ExecutionFlags {
     fn default() -> Self {
-        Self { only_query: false, charge_fee: true, validate: true }
+        Self { only_query: false, charge_fee: true, validate: true, nonce_check: true }
     }
 }
 
@@ -145,6 +157,7 @@ impl AccountTransaction {
             only_query: false,
             charge_fee: enforce_fee(&tx, false),
             validate: true,
+            nonce_check: true
         };
         AccountTransaction { tx, execution_flags }
     }
@@ -351,6 +364,12 @@ impl AccountTransaction {
         Ok(())
     }
 
+    /// This method no longer increments the nonce. Refer to individual functions to see
+    /// in which stage the nonce is incremented.
+    ///
+    /// Nonce incremental logics manually placed in
+    /// [`AccountTransaction::run_revertible`], [`AccountTransaction::run_non_revertible`],
+    /// [`StatefulValidator::perform_validations`](crate::blockifier::stateful_validator::StatefulValidator::perform_validations)
     fn handle_nonce(
         state: &mut dyn State,
         tx_info: &TransactionInfo,
@@ -369,7 +388,8 @@ impl AccountTransaction {
             account_nonce <= incoming_tx_nonce
         };
         if valid_nonce {
-            return Ok(state.increment_nonce(address)?);
+            // return Ok(state.increment_nonce(address)?);
+            return Ok(());
         }
         Err(TransactionPreValidationError::InvalidNonce {
             address,
@@ -548,7 +568,18 @@ impl AccountTransaction {
     ) -> TransactionExecutionResult<ValidateExecuteCallInfo> {
         let validate_call_info: Option<CallInfo>;
         let execute_call_info: Option<CallInfo>;
+
         if matches!(&self.tx, Transaction::DeployAccount(_)) {
+            // See similar comment in `run_revertible` for context. Not sure for this case if
+            // incrementing the nonce at this stage is correct.
+            //
+            // Only increment the nonce if it's not V0 transaction. Why? not exactly sure but
+            // that's what the tests implies.
+            if !tx_context.tx_info.is_v0() {
+                // See similar comment in `run_revertible` for context.
+                state.increment_nonce(tx_context.tx_info.sender_address())?;
+            }
+
             // Handle `DeployAccount` transactions separately, due to different order of things.
             // Also, the execution context required for the `DeployAccount` execute phase is
             // validation context.
@@ -588,6 +619,14 @@ impl AccountTransaction {
                     ),
                 )),
             );
+
+            // Only increment the nonce if it's not V0 transaction. Why? not exactly sure but
+            // that's what the tests implies.
+            if !execution_context.tx_context.tx_info.is_v0() {
+                // See similar comment in `run_revertible` for context.
+                state.increment_nonce(tx_context.tx_info.sender_address())?;
+            }
+
             execute_call_info = self.run_execute(state, &mut execution_context, remaining_gas)?;
         }
 
@@ -642,6 +681,23 @@ impl AccountTransaction {
                 ),
             )),
         );
+        // Increment the sender nonce only after the tx has passed validation.
+        //
+        // NOTE:
+        //
+        // Before this, the nonce is incremented in `AccountTransaction::handle_nonce` which is
+        // called at the initial stage of transaction processing (ie in
+        // ExecutableTransaction::execute_raw of AccountTransaction), which is even before the
+        // account validation logic is being run. Which is weird because the nonce would get
+        // incremented even if the transaction failed validation. And this is not what I
+        // observed from mainnet/testnet. So, I moved the nonce incrementation here.
+        //
+        // Only increment the nonce if it's not V0 transaction. Why? not exactly sure but
+        // that's what the tests implies.
+        if !execution_context.tx_context.tx_info.is_v0() {
+            state.increment_nonce(tx_context.tx_info.sender_address())?;
+        }
+
         let n_allotted_execution_steps = execution_context.subtract_validation_and_overhead_steps(
             &validate_call_info,
             &self.tx_type(),
