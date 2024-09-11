@@ -22,6 +22,7 @@ use starknet_api::{
     storage_key,
 };
 
+use crate::concurrency::TxIndex;
 use crate::concurrency::test_utils::{
     class_hash,
     contract_address,
@@ -32,7 +33,6 @@ use crate::concurrency::versioned_state::{
     VersionedState,
     VersionedStateProxy,
 };
-use crate::concurrency::TxIndex;
 use crate::context::BlockContext;
 use crate::state::cached_state::{
     CachedState,
@@ -215,11 +215,11 @@ fn test_run_parallel_txs(default_all_resource_bounds: ValidResourceBounds) {
         FeatureContract::AccountWithoutValidations(CairoVersion::Cairo0);
 
     // Initiate States
-    let versioned_state = Arc::new(Mutex::new(VersionedState::new(test_state(
-        chain_info,
-        BALANCE,
-        &[(account_without_validation, 1), (grindy_account, 1)],
-    ))));
+    let versioned_state =
+        Arc::new(Mutex::new(VersionedState::new(test_state(chain_info, BALANCE, &[
+            (account_without_validation, 1),
+            (grindy_account, 1),
+        ]))));
 
     let safe_versioned_state = ThreadSafeVersionedState(Arc::clone(&versioned_state));
     let mut versioned_state_proxy_1 = safe_versioned_state.pin_version(1);

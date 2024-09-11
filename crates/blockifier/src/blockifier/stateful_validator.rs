@@ -7,9 +7,9 @@ use thiserror::Error;
 
 use crate::blockifier::config::TransactionExecutorConfig;
 use crate::blockifier::transaction_executor::{
+    BLOCK_STATE_ACCESS_ERR,
     TransactionExecutor,
     TransactionExecutorError,
-    BLOCK_STATE_ACCESS_ERR,
 };
 use crate::context::{BlockContext, GasCounter, TransactionContext};
 use crate::execution::call_info::CallInfo;
@@ -17,7 +17,7 @@ use crate::fee::fee_checks::PostValidationReport;
 use crate::fee::receipt::TransactionReceipt;
 use crate::state::cached_state::CachedState;
 use crate::state::errors::StateError;
-use crate::state::state_api::StateReader;
+use crate::state::state_api::{State, StateReader};
 use crate::transaction::account_transaction::AccountTransaction;
 use crate::transaction::errors::{TransactionExecutionError, TransactionPreValidationError};
 use crate::transaction::transaction_execution::Transaction;
@@ -64,16 +64,29 @@ impl<S: StateReader> StatefulValidator<S> {
         }
 
         let tx_context = Arc::new(self.tx_executor.block_context.to_tx_context(&tx));
-        tx.perform_pre_validation_stage(self.state(), &tx_context)?;
-        if !tx.execution_flags.validate {
-            return Ok(());
+        tx.perform_pre_validation_stage(self.state(), &tx_context.clone())?;
+
+        if tx.execution_flags.validate {
+            // `__validate__` call.
+            let (_optional_call_info, actual_cost) =
+                self.validate(&tx, tx_context.clone())?;
+
+            // Post validations.
+            PostValidationReport::verify(&tx_context, &actual_cost, tx.execution_flags.charge_fee)?;
         }
 
-        // `__validate__` call.
-        let (_optional_call_info, actual_cost) = self.validate(&tx, tx_context.clone())?;
-
-        // Post validations.
-        PostValidationReport::verify(&tx_context, &actual_cost, tx.execution_flags.charge_fee)?;
+        // See similar comment in `run_revertible` for context.
+        //
+        // From what I've seen there is not suitable method that is used by both the validator and
+        // the normal transaction flow where the nonce increment logic can be placed. So
+        // this is manually placed here.
+        //
+        // TODO: find a better place to put this without needing this duplication.
+        self.tx_executor
+            .block_state
+            .as_mut()
+            .expect(BLOCK_STATE_ACCESS_ERR)
+            .increment_nonce(tx_context.tx_info.sender_address())?;
 
         Ok(())
     }
