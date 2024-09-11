@@ -4,7 +4,7 @@ use blockifier_test_utils::contracts::FeatureContract;
 use rstest::{fixture, rstest};
 use starknet_api::execution_resources::GasVector;
 use starknet_api::transaction::fields::GasVectorComputationMode;
-use starknet_api::transaction::{constants, L2ToL1Payload};
+use starknet_api::transaction::{L2ToL1Payload, constants};
 use starknet_api::{invoke_tx_args, nonce};
 use starknet_types_core::felt::Felt;
 
@@ -419,15 +419,12 @@ fn test_calculate_tx_gas_usage(
 
     // A tx that changes the account and some other balance in execute.
     let some_other_account_address = account_contract.get_instance_address(17);
-    let execute_calldata = create_calldata(
-        fee_token_address,
-        constants::TRANSFER_ENTRY_POINT_NAME,
-        &[
+    let execute_calldata =
+        create_calldata(fee_token_address, constants::TRANSFER_ENTRY_POINT_NAME, &[
             *some_other_account_address.0.key(), // Calldata: recipient.
             Felt::TWO,                           // Calldata: lsb amount.
             Felt::ZERO,                          // Calldata: msb amount.
-        ],
-    );
+        ]);
 
     let account_tx = invoke_tx_with_default_flags(invoke_tx_args! {
         resource_bounds: max_resource_bounds,

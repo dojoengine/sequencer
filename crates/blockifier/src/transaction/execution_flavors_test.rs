@@ -48,8 +48,7 @@ use crate::transaction::objects::{TransactionExecutionInfo, TransactionExecution
 use crate::transaction::test_utils::{
     default_l1_resource_bounds,
     invoke_tx_with_default_flags,
-    l1_resource_bounds,
-    INVALID,
+    l1_resource_bounds, INVALID,
 };
 use crate::transaction::transactions::ExecutableTransaction;
 use crate::utils::u64_from_usize;
@@ -70,11 +69,11 @@ fn create_flavors_test_state(
     let test_contract = FeatureContract::TestContract(cairo_version);
     let account_contract = FeatureContract::AccountWithoutValidations(cairo_version);
     let faulty_account_contract = FeatureContract::FaultyAccount(cairo_version);
-    let state = test_state(
-        chain_info,
-        BALANCE,
-        &[(account_contract, 1), (faulty_account_contract, 1), (test_contract, 1)],
-    );
+    let state = test_state(chain_info, BALANCE, &[
+        (account_contract, 1),
+        (faulty_account_contract, 1),
+        (test_contract, 1),
+    ]);
     FlavorTestInitialState {
         state,
         account_address: account_contract.get_instance_address(0),
@@ -172,11 +171,9 @@ fn check_gas_and_fee(
 }
 
 fn recurse_calldata(contract_address: ContractAddress, fail: bool, depth: u32) -> Calldata {
-    create_calldata(
-        contract_address,
-        if fail { "recursive_fail" } else { "recurse" },
-        &[felt!(depth)],
-    )
+    create_calldata(contract_address, if fail { "recursive_fail" } else { "recurse" }, &[felt!(
+        depth
+    )])
 }
 
 // Helper function to get the arguments for the pre-validation tests.
