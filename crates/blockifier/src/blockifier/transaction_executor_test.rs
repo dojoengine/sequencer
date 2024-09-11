@@ -17,9 +17,9 @@ use starknet_types_core::felt::Felt;
 
 use crate::blockifier::config::TransactionExecutorConfig;
 use crate::blockifier::transaction_executor::{
+    BLOCK_STATE_ACCESS_ERR,
     TransactionExecutor,
     TransactionExecutorError,
-    BLOCK_STATE_ACCESS_ERR,
 };
 use crate::bouncer::{Bouncer, BouncerWeights};
 use crate::concurrency::worker_pool::WorkerPool;
@@ -33,12 +33,12 @@ use crate::test_utils::{maybe_dummy_block_hash_and_number, BALANCE};
 use crate::transaction::account_transaction::AccountTransaction;
 use crate::transaction::errors::TransactionExecutionError;
 use crate::transaction::test_utils::{
+    TestInitData,
     block_context,
     calculate_class_info_for_testing,
     create_test_init_data,
     emit_n_events_tx,
     l1_resource_bounds,
-    TestInitData,
 };
 use crate::transaction::transaction_execution::Transaction;
 
@@ -76,7 +76,10 @@ fn tx_executor_test_body<S: StateReader>(
     TransactionVersion::ZERO,
     CairoVersion::Cairo0,
     BouncerWeights {
-        state_diff_size: 0,
+	    // The state diff size is 2 because to support declaring Cairo0 contracts, we
+		// need to include the compiled class hash and declared contracts of the Cairo
+		// 0 contract in the state diff.
+        state_diff_size: 2,
         message_segment_length: 0,
         n_events: 0,
         ..BouncerWeights::empty()
@@ -86,7 +89,7 @@ fn tx_executor_test_body<S: StateReader>(
     TransactionVersion::ONE,
     CairoVersion::Cairo0,
     BouncerWeights {
-        state_diff_size: 2,
+    	state_diff_size: 4,
         message_segment_length: 0,
         n_events: 0,
         ..BouncerWeights::empty()

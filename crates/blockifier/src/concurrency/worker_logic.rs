@@ -14,6 +14,7 @@ use crate::blockifier::transaction_executor::{
     TransactionExecutorResult,
 };
 use crate::bouncer::Bouncer;
+use crate::concurrency::TxIndex;
 use crate::concurrency::fee_utils::complete_fee_transfer_flow;
 use crate::concurrency::scheduler::{Scheduler, Task, TransactionStatus};
 use crate::concurrency::versioned_state::{
@@ -21,7 +22,6 @@ use crate::concurrency::versioned_state::{
     VersionedState,
     VersionedStateError,
 };
-use crate::concurrency::TxIndex;
 use crate::context::BlockContext;
 use crate::metrics::{CALLS_RUNNING_NATIVE, TOTAL_CALLS};
 use crate::state::cached_state::{ContractClassMapping, StateMaps, TransactionalState};
