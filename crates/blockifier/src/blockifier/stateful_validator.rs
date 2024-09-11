@@ -82,7 +82,8 @@ impl<S: StateReader> StatefulValidator<S> {
         }
 
         let tx_context = self.tx_executor.block_context.to_tx_context(&tx);
-        self.perform_pre_validation_stage(&tx, &tx_context, skip_fee_check)?;
+        let fee_check = !skip_fee_check;
+        self.perform_pre_validation_stage(&tx, &tx_context, fee_check)?;
 
         if !skip_validate {
             // `__validate__` call.
