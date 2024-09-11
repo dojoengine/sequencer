@@ -2,16 +2,16 @@ use assert_matches::assert_matches;
 use pretty_assertions::assert_eq;
 use rstest::rstest;
 use starknet_api::test_utils::NonceManager;
-use starknet_api::transaction::fields::Fee;
 use starknet_api::transaction::TransactionVersion;
+use starknet_api::transaction::fields::Fee;
 use starknet_api::{declare_tx_args, deploy_account_tx_args, felt, invoke_tx_args, nonce};
 use starknet_types_core::felt::Felt;
 
 use crate::blockifier::config::TransactionExecutorConfig;
 use crate::blockifier::transaction_executor::{
+    BLOCK_STATE_ACCESS_ERR,
     TransactionExecutor,
     TransactionExecutorError,
-    BLOCK_STATE_ACCESS_ERR,
 };
 use crate::bouncer::{Bouncer, BouncerWeights};
 use crate::context::BlockContext;
@@ -24,21 +24,21 @@ use crate::test_utils::initial_test_state::test_state;
 use crate::test_utils::invoke::invoke_tx;
 use crate::test_utils::l1_handler::l1handler_tx;
 use crate::test_utils::{
+    BALANCE,
+    CairoVersion,
+    DEFAULT_STRK_L1_GAS_PRICE,
     create_calldata,
     maybe_dummy_block_hash_and_number,
-    CairoVersion,
-    BALANCE,
-    DEFAULT_STRK_L1_GAS_PRICE,
 };
 use crate::transaction::account_transaction::{AccountTransaction, ExecutionFlags};
 use crate::transaction::errors::TransactionExecutionError;
 use crate::transaction::test_utils::{
+    TestInitData,
     block_context,
     calculate_class_info_for_testing,
     create_test_init_data,
     emit_n_events_tx,
     l1_resource_bounds,
-    TestInitData,
 };
 use crate::transaction::transaction_execution::Transaction;
 use crate::transaction::transactions::enforce_fee;
@@ -75,7 +75,10 @@ fn tx_executor_test_body<S: StateReader>(
     TransactionVersion::ZERO,
     CairoVersion::Cairo0,
     BouncerWeights {
-        state_diff_size: 0,
+	    // The state diff size is 2 because to support declaring Cairo0 contracts, we
+		// need to include the compiled class hash and declared contracts of the Cairo
+		// 0 contract in the state diff.
+        state_diff_size: 2,
         message_segment_length: 0,
         n_events: 0,
         ..BouncerWeights::empty()
@@ -85,7 +88,7 @@ fn tx_executor_test_body<S: StateReader>(
     TransactionVersion::ONE,
     CairoVersion::Cairo0,
     BouncerWeights {
-        state_diff_size: 2,
+    	state_diff_size: 4,
         message_segment_length: 0,
         n_events: 0,
         ..BouncerWeights::empty()
@@ -218,11 +221,10 @@ fn test_invoke(
 ) {
     let test_contract = FeatureContract::TestContract(cairo_version);
     let account_contract = FeatureContract::AccountWithoutValidations(cairo_version);
-    let state = test_state(
-        &block_context.chain_info,
-        BALANCE,
-        &[(test_contract, 1), (account_contract, 1)],
-    );
+    let state = test_state(&block_context.chain_info, BALANCE, &[
+        (test_contract, 1),
+        (account_contract, 1),
+    ]);
 
     let calldata =
         create_calldata(test_contract.get_instance_address(0), entry_point_name, &entry_point_args);

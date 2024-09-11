@@ -4,6 +4,7 @@ use starknet_api::block::FeeType;
 use starknet_api::core::ContractAddress;
 use starknet_api::execution_resources::GasAmount;
 use starknet_api::state::StorageKey;
+use starknet_api::transaction::TransactionVersion;
 use starknet_api::transaction::fields::{
     AllResourceBounds,
     Calldata,
@@ -13,7 +14,6 @@ use starknet_api::transaction::fields::{
     ResourceBounds,
     ValidResourceBounds,
 };
-use starknet_api::transaction::TransactionVersion;
 use starknet_api::{contract_address, felt, invoke_tx_args};
 use starknet_types_core::felt::Felt;
 
@@ -23,17 +23,18 @@ use crate::state::state_api::StateReader;
 use crate::test_utils::contracts::FeatureContract;
 use crate::test_utils::initial_test_state::test_state;
 use crate::test_utils::{
-    create_calldata,
-    CairoVersion,
     BALANCE,
+    CairoVersion,
     DEFAULT_STRK_L1_DATA_GAS_PRICE,
     DEFAULT_STRK_L1_GAS_PRICE,
     DEFAULT_STRK_L2_GAS_PRICE,
+    create_calldata,
 };
 use crate::transaction::account_transaction::AccountTransaction;
 use crate::transaction::errors::TransactionExecutionError;
 use crate::transaction::objects::{HasRelatedFeeType, TransactionInfoCreator};
 use crate::transaction::test_utils::{
+    TestInitData,
     account_invoke_tx,
     block_context,
     create_all_resource_bounds,
@@ -42,7 +43,6 @@ use crate::transaction::test_utils::{
     l1_resource_bounds,
     max_fee,
     run_invoke_tx,
-    TestInitData,
 };
 use crate::transaction::transactions::ExecutableTransaction;
 use crate::versioned_constants::AllocationCost;
@@ -67,17 +67,13 @@ fn calldata_for_write_and_transfer(
     transfer_amount: Felt,
     fee_token_address: ContractAddress,
 ) -> Calldata {
-    create_calldata(
-        test_contract_address,
-        "test_write_and_transfer",
-        &[
-            storage_address,            // Calldata: storage address.
-            storage_value,              // Calldata: storage value.
-            recipient,                  // Calldata: to.
-            transfer_amount,            // Calldata: amount.
-            *fee_token_address.0.key(), // Calldata: fee token address.
-        ],
-    )
+    create_calldata(test_contract_address, "test_write_and_transfer", &[
+        storage_address,            // Calldata: storage address.
+        storage_value,              // Calldata: storage value.
+        recipient,                  // Calldata: to.
+        transfer_amount,            // Calldata: amount.
+        *fee_token_address.0.key(), // Calldata: fee token address.
+    ])
 }
 
 /// Tests that when a transaction drains an account's balance before fee transfer, the execution is
@@ -115,15 +111,11 @@ fn test_revert_on_overdraft(
     assert_eq!(state.get_storage_at(contract_address, storage_key).unwrap(), felt!(0_u8));
 
     // Approve the test contract to transfer funds.
-    let approve_calldata = create_calldata(
-        fee_token_address,
-        "approve",
-        &[
-            *contract_address.0.key(), // Calldata: to.
-            felt!(BALANCE.0),
-            felt!(0_u8),
-        ],
-    );
+    let approve_calldata = create_calldata(fee_token_address, "approve", &[
+        *contract_address.0.key(), // Calldata: to.
+        felt!(BALANCE.0),
+        felt!(0_u8),
+    ]);
 
     let approve_tx: AccountTransaction = account_invoke_tx(invoke_tx_args! {
         max_fee,
@@ -139,25 +131,21 @@ fn test_revert_on_overdraft(
 
     // Transfer a valid amount of funds to compute the cost of a successful
     // `test_write_and_transfer` operation. This operation should succeed.
-    let execution_info = run_invoke_tx(
-        &mut state,
-        &block_context,
-        invoke_tx_args! {
-            max_fee,
-            sender_address: account_address,
-            calldata: calldata_for_write_and_transfer(
-                contract_address,
-                storage_address,
-                expected_final_value,
-                recipient,
-                final_received_amount,
-                fee_token_address
-            ),
-            version,
-            resource_bounds: default_all_resource_bounds,
-            nonce: nonce_manager.next(account_address),
-        },
-    )
+    let execution_info = run_invoke_tx(&mut state, &block_context, invoke_tx_args! {
+        max_fee,
+        sender_address: account_address,
+        calldata: calldata_for_write_and_transfer(
+            contract_address,
+            storage_address,
+            expected_final_value,
+            recipient,
+            final_received_amount,
+            fee_token_address
+        ),
+        version,
+        resource_bounds: default_all_resource_bounds,
+        nonce: nonce_manager.next(account_address),
+    })
     .unwrap();
 
     assert!(!execution_info.is_reverted());
@@ -170,25 +158,21 @@ fn test_revert_on_overdraft(
 
     // Attempt to transfer the entire balance, such that no funds remain to pay transaction fee.
     // This operation should revert.
-    let execution_info = run_invoke_tx(
-        &mut state,
-        &block_context,
-        invoke_tx_args! {
-            max_fee,
-            sender_address: account_address,
-            calldata: calldata_for_write_and_transfer(
-                contract_address,
-                storage_address,
-                felt!(0_u8),
-                recipient,
-                balance,
-                fee_token_address
-            ),
-            version,
-            resource_bounds: default_all_resource_bounds,
-            nonce: nonce_manager.next(account_address),
-        },
-    )
+    let execution_info = run_invoke_tx(&mut state, &block_context, invoke_tx_args! {
+        max_fee,
+        sender_address: account_address,
+        calldata: calldata_for_write_and_transfer(
+            contract_address,
+            storage_address,
+            felt!(0_u8),
+            recipient,
+            balance,
+            fee_token_address
+        ),
+        version,
+        resource_bounds: default_all_resource_bounds,
+        nonce: nonce_manager.next(account_address),
+    })
     .unwrap();
 
     // Compute the expected balance after the reverted write+transfer (tx fee should be charged).
@@ -292,17 +276,13 @@ fn test_revert_on_resource_overuse(
     // We need this kind of invocation, to be able to test the specific scenario: the resource
     // bounds must be enough to allow completion of the transaction, and yet must still fail
     // post-execution bounds check.
-    let mut execution_info_measure = run_invoke_tx(
-        &mut state,
-        &block_context,
-        invoke_tx_args! {
-            max_fee,
-            resource_bounds,
-            nonce: nonce_manager.next(account_address),
-            calldata: write_a_lot_calldata(),
-            ..base_args.clone()
-        },
-    )
+    let mut execution_info_measure = run_invoke_tx(&mut state, &block_context, invoke_tx_args! {
+        max_fee,
+        resource_bounds,
+        nonce: nonce_manager.next(account_address),
+        calldata: write_a_lot_calldata(),
+        ..base_args.clone()
+    })
     .unwrap();
     assert_eq!(execution_info_measure.revert_error, None);
 
@@ -326,17 +306,13 @@ fn test_revert_on_resource_overuse(
 
     // Run the same function, with a different written value (to keep cost high), with the actual
     // resources used as upper bounds. Make sure execution does not revert.
-    let execution_info_tight = run_invoke_tx(
-        &mut state,
-        &block_context,
-        invoke_tx_args! {
-            max_fee: actual_fee,
-            resource_bounds: tight_resource_bounds,
-            nonce: nonce_manager.next(account_address),
-            calldata: write_a_lot_calldata(),
-            ..base_args.clone()
-        },
-    )
+    let execution_info_tight = run_invoke_tx(&mut state, &block_context, invoke_tx_args! {
+        max_fee: actual_fee,
+        resource_bounds: tight_resource_bounds,
+        nonce: nonce_manager.next(account_address),
+        calldata: write_a_lot_calldata(),
+        ..base_args.clone()
+    })
     .unwrap();
     assert_eq!(execution_info_tight.revert_error, None);
     assert_eq!(execution_info_tight.receipt.fee, actual_fee);
@@ -385,17 +361,13 @@ fn test_revert_on_resource_overuse(
             }
         }
     };
-    let execution_info_result = run_invoke_tx(
-        &mut state,
-        &block_context,
-        invoke_tx_args! {
-            max_fee: low_max_fee,
-            resource_bounds: low_bounds,
-            nonce: nonce_manager.next(account_address),
-            calldata: write_a_lot_calldata(),
-            ..base_args
-        },
-    );
+    let execution_info_result = run_invoke_tx(&mut state, &block_context, invoke_tx_args! {
+        max_fee: low_max_fee,
+        resource_bounds: low_bounds,
+        nonce: nonce_manager.next(account_address),
+        calldata: write_a_lot_calldata(),
+        ..base_args
+    });
 
     // Assert the transaction was reverted with the correct error.
     let expected_error_prefix = if version == TransactionVersion::ZERO {

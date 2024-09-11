@@ -22,7 +22,7 @@ use blockifier::versioned_constants::{VersionedConstants, VersionedConstantsOver
 use indexmap::IndexMap;
 #[cfg(test)]
 use mockall::automock;
-use papyrus_config::dumping::{append_sub_config_name, ser_param, SerializeConfig};
+use papyrus_config::dumping::{SerializeConfig, append_sub_config_name, ser_param};
 use papyrus_config::{ParamPath, ParamPrivacyInput, SerializedParam};
 use papyrus_state_reader::papyrus_state::PapyrusReader;
 use papyrus_storage::StorageReader;
@@ -164,6 +164,7 @@ impl BlockBuilderTrait for BlockBuilder {
                                 only_query,
                                 charge_fee,
                                 validate: true,
+                                nonce_check: true,
                             },
                         })
                     }

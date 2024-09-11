@@ -1,22 +1,22 @@
 use assert_matches::assert_matches;
 use rstest::rstest;
 use starknet_api::executable_transaction::AccountTransaction as Transaction;
-use starknet_api::transaction::fields::ValidResourceBounds;
 use starknet_api::transaction::TransactionVersion;
+use starknet_api::transaction::fields::ValidResourceBounds;
 
 use crate::blockifier::stateful_validator::StatefulValidator;
 use crate::context::BlockContext;
 use crate::test_utils::contracts::FeatureContract;
 use crate::test_utils::initial_test_state::{fund_account, test_state};
-use crate::test_utils::{CairoVersion, BALANCE};
+use crate::test_utils::{BALANCE, CairoVersion};
 use crate::transaction::test_utils::{
+    FaultyAccountTxCreatorArgs,
+    INVALID,
+    VALID,
     block_context,
     create_account_tx_for_validate_test_nonce_0,
     default_all_resource_bounds,
     default_l1_resource_bounds,
-    FaultyAccountTxCreatorArgs,
-    INVALID,
-    VALID,
 };
 use crate::transaction::transaction_types::TransactionType;
 
@@ -73,7 +73,8 @@ fn test_tx_validator(
     // Test the stateful validator.
     let mut stateful_validator = StatefulValidator::create(state, block_context);
     let skip_validate = false;
-    let result = stateful_validator.perform_validations(account_tx, skip_validate);
+    let skip_fee_check = false;
+    let result = stateful_validator.perform_validations(account_tx, skip_validate, skip_fee_check);
     assert!(result.is_ok(), "Validation failed: {:?}", result.unwrap_err());
 }
 
@@ -99,6 +100,6 @@ fn test_tx_validator_skip_validate(
 
     let mut stateful_validator = StatefulValidator::create(state, block_context);
     // The transaction validations should be skipped and the function should return Ok.
-    let result = stateful_validator.perform_validations(tx, true);
+    let result = stateful_validator.perform_validations(tx, true, false);
     assert_matches!(result, Ok(()));
 }
