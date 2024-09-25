@@ -12,9 +12,9 @@ use starknet_api::executable_transaction::AccountTransaction as ApiExecutableTra
 use starknet_api::execution_resources::GasVector;
 use starknet_api::test_utils::invoke::executable_invoke_tx;
 use starknet_api::test_utils::NonceManager;
+use starknet_api::transaction::TransactionVersion;
 use starknet_api::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
 use starknet_api::transaction::fields::{Fee, ValidResourceBounds};
-use starknet_api::transaction::TransactionVersion;
 use starknet_api::{calldata, felt, invoke_tx_args};
 
 use crate::blockifier::concurrent_transaction_executor::ConcurrentTransactionExecutor;
