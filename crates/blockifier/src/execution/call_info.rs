@@ -27,34 +27,30 @@ macro_rules! retdata {
     };
 }
 
-#[cfg_attr(any(test, feature = "testing"), derive(Clone))]
 #[cfg_attr(feature = "transaction_serde", derive(serde::Deserialize))]
-#[derive(Debug, Default, Eq, PartialEq, Serialize)]
+#[derive(Debug, Default, Eq, PartialEq, Serialize, Clone)]
 pub struct OrderedEvent {
     pub order: usize,
     pub event: EventContent,
 }
 
-#[cfg_attr(any(test, feature = "testing"), derive(Clone))]
 #[cfg_attr(feature = "transaction_serde", derive(serde::Deserialize))]
-#[derive(Debug, Default, Eq, PartialEq, Serialize)]
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize)]
 pub struct MessageToL1 {
     pub to_address: EthAddress,
     pub payload: L2ToL1Payload,
 }
 
-#[cfg_attr(any(test, feature = "testing"), derive(Clone))]
 #[cfg_attr(feature = "transaction_serde", derive(serde::Deserialize))]
-#[derive(Debug, Default, Eq, PartialEq, Serialize)]
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize)]
 pub struct OrderedL2ToL1Message {
     pub order: usize,
     pub message: MessageToL1,
 }
 
 /// Represents the effects of executing a single entry point.
-#[cfg_attr(any(test, feature = "testing"), derive(Clone))]
 #[cfg_attr(feature = "transaction_serde", derive(serde::Deserialize))]
-#[derive(Debug, Default, Eq, PartialEq, Serialize)]
+#[derive(Debug, Default, Eq, PartialEq, Serialize, Clone)]
 pub struct CallExecution {
     pub retdata: Retdata,
     pub events: Vec<OrderedEvent>,
@@ -137,9 +133,8 @@ impl AddAssign<&ChargedResources> for ChargedResources {
     }
 }
 
-#[cfg_attr(any(test, feature = "testing"), derive(Clone))]
 #[cfg_attr(feature = "transaction_serde", derive(serde::Deserialize))]
-#[derive(Debug, Default, Eq, PartialEq, Serialize)]
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize)]
 pub struct StorageAccessTracker {
     pub storage_read_values: Vec<Felt>,
     pub accessed_storage_keys: HashSet<StorageKey>,
