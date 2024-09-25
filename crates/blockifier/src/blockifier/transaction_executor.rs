@@ -86,17 +86,16 @@ impl<S: StateReader> TransactionExecutor<S> {
     pub fn execute(
         &mut self,
         tx: &Transaction,
+        validate: bool,
+        charge_fee: bool,
     ) -> TransactionExecutorResult<TransactionExecutionInfo> {
         let mut transactional_state = TransactionalState::create_transactional(
             self.block_state.as_mut().expect(BLOCK_STATE_ACCESS_ERR),
         );
         // Executing a single transaction cannot be done in a concurrent mode.
-        let execution_flags = ExecutionFlags {
-            charge_fee: true,
-            validate: true,
-            nonce_check: true,
-            concurrency_mode: false,
-        };
+        let execution_flags =
+            ExecutionFlags { charge_fee, validate, nonce_check: true, concurrency_mode: false };
+
         let tx_execution_result =
             tx.execute_raw(&mut transactional_state, &self.block_context, execution_flags);
         match tx_execution_result {
@@ -122,10 +121,12 @@ impl<S: StateReader> TransactionExecutor<S> {
     pub fn execute_txs_sequentially(
         &mut self,
         txs: &[Transaction],
+        validate: bool,
+        charge_fee: bool,
     ) -> Vec<TransactionExecutorResult<TransactionExecutionInfo>> {
         let mut results = Vec::new();
         for tx in txs {
-            match self.execute(tx) {
+            match self.execute(tx, validate, charge_fee) {
                 Ok(tx_execution_info) => results.push(Ok(tx_execution_info)),
                 Err(TransactionExecutorError::BlockFull) => break,
                 Err(error) => results.push(Err(error)),
@@ -183,10 +184,12 @@ impl<S: StateReader + Send + Sync> TransactionExecutor<S> {
     pub fn execute_txs(
         &mut self,
         txs: &[Transaction],
+        validate: bool,
+        charge_fee: bool,
     ) -> Vec<TransactionExecutorResult<TransactionExecutionInfo>> {
         if !self.config.concurrency_config.enabled {
             log::debug!("Executing transactions sequentially.");
-            self.execute_txs_sequentially(txs)
+            self.execute_txs_sequentially(txs, validate, charge_fee)
         } else {
             log::debug!("Executing transactions concurrently.");
             let chunk_size = self.config.concurrency_config.chunk_size;

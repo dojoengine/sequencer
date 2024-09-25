@@ -166,7 +166,7 @@ impl PyBlockExecutor {
         optional_py_class_info: Option<PyClassInfo>,
     ) -> NativeBlockifierResult<Py<PyBytes>> {
         let tx: Transaction = py_tx(tx, optional_py_class_info).expect(PY_TX_PARSING_ERR);
-        let tx_execution_info = self.tx_executor().execute(&tx)?;
+        let tx_execution_info = self.tx_executor().execute(&tx, true, true)?;
         let thin_tx_execution_info = ThinTransactionExecutionInfo::from_tx_execution_info(
             &self.tx_executor().block_context,
             tx_execution_info,
@@ -194,8 +194,9 @@ impl PyBlockExecutor {
             .collect();
 
         // Run.
-        let results =
-            Python::with_gil(|py| py.allow_threads(|| self.tx_executor().execute_txs(&txs)));
+        let results = Python::with_gil(|py| {
+            py.allow_threads(|| self.tx_executor().execute_txs(&txs, true, true))
+        });
 
         // Process results.
         // TODO(Yoni, 15/5/2024): serialize concurrently.

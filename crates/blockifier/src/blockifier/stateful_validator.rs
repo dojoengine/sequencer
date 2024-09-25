@@ -71,19 +71,21 @@ impl<S: StateReader> StatefulValidator<S> {
         skip_validate: bool,
         skip_fee_check: bool,
     ) -> StatefulValidatorResult<()> {
+        let validate = !skip_validate;
+        let fee_check = !skip_fee_check;
+
         // Deploy account transactions should be fully executed, since the constructor must run
         // before `__validate_deploy__`. The execution already includes all necessary validations,
         // so they are skipped here.
         if let AccountTransaction::DeployAccount(_) = tx {
-            self.execute(tx)?;
+            self.execute(tx, validate, fee_check)?;
             return Ok(());
         }
 
         let tx_context = self.tx_executor.block_context.to_tx_context(&tx);
-        let fee_check = !skip_fee_check;
         self.perform_pre_validation_stage(&tx, &tx_context, fee_check)?;
 
-        if !skip_validate {
+        if validate {
             // `__validate__` call.
             let versioned_constants = &tx_context.block_context.versioned_constants();
             let (_optional_call_info, actual_cost) =
@@ -109,8 +111,13 @@ impl<S: StateReader> StatefulValidator<S> {
         Ok(())
     }
 
-    fn execute(&mut self, tx: AccountTransaction) -> StatefulValidatorResult<()> {
-        self.tx_executor.execute(&Transaction::AccountTransaction(tx))?;
+    fn execute(
+        &mut self,
+        tx: AccountTransaction,
+        validate: bool,
+        fee_check: bool,
+    ) -> StatefulValidatorResult<()> {
+        self.tx_executor.execute(&Transaction::AccountTransaction(tx), validate, fee_check)?;
         Ok(())
     }
 
