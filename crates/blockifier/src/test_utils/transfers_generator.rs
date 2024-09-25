@@ -7,9 +7,9 @@ use starknet_api::core::ContractAddress;
 use starknet_api::executable_transaction::AccountTransaction as ApiExecutableTransaction;
 use starknet_api::test_utils::invoke::executable_invoke_tx;
 use starknet_api::test_utils::NonceManager;
+use starknet_api::transaction::TransactionVersion;
 use starknet_api::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
 use starknet_api::transaction::fields::Fee;
-use starknet_api::transaction::TransactionVersion;
 use starknet_api::{calldata, felt, invoke_tx_args};
 use starknet_types_core::felt::Felt;
 
