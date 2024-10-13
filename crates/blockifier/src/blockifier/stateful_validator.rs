@@ -86,11 +86,19 @@ impl<S: StateReader> StatefulValidator<S> {
 
         if !skip_validate {
             // `__validate__` call.
+
+            // On fee-disabled mode, we don't need to worry about transaction running out of
+            // resources error as we will allocate max resources for the transaction to
+            // run with.
             let (_optional_call_info, actual_cost) =
                 self.validate(&tx, tx_context.initial_sierra_gas().0)?;
 
-            // Post validations.
-            PostValidationReport::verify(&tx_context, &actual_cost)?;
+            // We will only do the post validation if we're running in fee-enabled mode. As it
+            // verifies that the actual cost of validation is within sender bounds (ie tx max fee).
+            if tx.execution_flags.charge_fee {
+                // Post validations.
+                PostValidationReport::verify(&tx_context, &actual_cost)?;
+            }
         }
 
         // See similar comment in `run_revertible` for context.
@@ -130,6 +138,15 @@ impl<S: StateReader> StatefulValidator<S> {
         Ok(())
     }
 
+    /// Katana patch:
+    ///
+    /// We added a new parameter `limit_steps_by_resources` to the `validate` method. This is to
+    /// toggle between fee-enabled and disabled modes.
+    ///
+    /// In fee-enabled mode, we limit the number of steps based on the transaction resources
+    /// (ie max fee). In fee-disabled mode, ie `limit_steps_by_resources = false`, the execution
+    /// resources will be set to maximum number of steps allowed. See
+    /// [`EntryPointExecution::max_steps`].
     fn validate(
         &mut self,
         tx: &AccountTransaction,
@@ -137,7 +154,7 @@ impl<S: StateReader> StatefulValidator<S> {
     ) -> StatefulValidatorResult<(Option<CallInfo>, TransactionReceipt)> {
         let tx_context = Arc::new(self.tx_executor.block_context.to_tx_context(tx));
 
-        let limit_steps_by_resources = tx.enforce_fee();
+        let limit_steps_by_resources = tx.execution_flags.charge_fee;
         let validate_call_info = tx.validate_tx(
             self.tx_executor.block_state.as_mut().expect(BLOCK_STATE_ACCESS_ERR),
             tx_context.clone(),
