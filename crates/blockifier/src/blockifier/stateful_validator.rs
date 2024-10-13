@@ -88,6 +88,10 @@ impl<S: StateReader> StatefulValidator<S> {
 
         if tx.execution_flags.validate {
             // `__validate__` call.
+
+            // On fee-disabled mode, we don't need to worry about transaction running out of
+            // resources error as we will allocate max resources for the transaction to
+            // run with.
             let (_optional_call_info, actual_cost) =
                 self.validate(&tx, tx_context.clone())?;
 
@@ -125,6 +129,15 @@ impl<S: StateReader> StatefulValidator<S> {
         Ok(())
     }
 
+    /// Katana patch:
+    ///
+    /// We added a new parameter `limit_steps_by_resources` to the `validate` method. This is to
+    /// toggle between fee-enabled and disabled modes.
+    ///
+    /// In fee-enabled mode, we limit the number of steps based on the transaction resources
+    /// (ie max fee). In fee-disabled mode, ie `limit_steps_by_resources = false`, the execution
+    /// resources will be set to maximum number of steps allowed. See
+    /// [`EntryPointExecution::max_steps`].
     #[allow(clippy::result_large_err)]
     fn validate(
         &mut self,
