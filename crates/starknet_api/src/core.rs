@@ -4,6 +4,7 @@ mod core_test;
 
 use core::fmt::Display;
 use std::fmt::Debug;
+use std::str::FromStr;
 
 use derive_more::Display;
 use once_cell::sync::Lazy;
@@ -24,6 +25,15 @@ pub enum ChainId {
     Mainnet,
     Sepolia,
     IntegrationSepolia,
+    /// A chain id based on a raw felt value.
+    ///
+    /// This is used in the case where the chain id doesn't necessarily
+    /// have a valid ASCII representation.
+    ///
+    /// Why not just use the `Other` variant and parse the felt value as a string?
+    ///
+    /// Added mainly to support this: https://github.com/dojoengine/dojo/issues/1595
+    Id(Felt),
     Other(String),
 }
 
@@ -51,6 +61,10 @@ impl From<String> for ChainId {
             "SN_MAIN" => ChainId::Mainnet,
             "SN_SEPOLIA" => ChainId::Sepolia,
             "SN_INTEGRATION_SEPOLIA" => ChainId::IntegrationSepolia,
+            other if other.starts_with("0x") => {
+                let felt = Felt::from_str(other).expect("valid felt value");
+                ChainId::Id(felt)
+            }
             other => ChainId::Other(other.to_owned()),
         }
     }
@@ -61,6 +75,7 @@ impl Display for ChainId {
             ChainId::Mainnet => write!(f, "SN_MAIN"),
             ChainId::Sepolia => write!(f, "SN_SEPOLIA"),
             ChainId::IntegrationSepolia => write!(f, "SN_INTEGRATION_SEPOLIA"),
+            ChainId::Id(felt) => write!(f, "{felt:#x}"),
             ChainId::Other(ref s) => write!(f, "{}", s),
         }
     }
@@ -68,7 +83,20 @@ impl Display for ChainId {
 
 impl ChainId {
     pub fn as_hex(&self) -> String {
-        format!("0x{}", hex::encode(self.to_string()))
+        match self {
+            // It is important that we return the raw hex format of the id here. If we were to hex
+            // encode it, the resulting value would be totally different once it gets
+            // pass to the syscall.
+            //
+            // This is how blockifier pass the chain id to the contract through the syscall:
+            // https://github.com/dojoengine/sequencer/blob/d6951f24fc2082c7aa89cdbc063648915b131d74/crates/blockifier/src/execution/syscalls/hint_processor.rs#L629-L631
+            //
+            // So for example, if ChainId::Id(0x1), if we were to hex encode it like the `_` branch
+            // (the original code), the raw id would be treated as an string instead of
+            // a felt and the resulting String would be 0x307831 ( 0 = 0x30, x = 0x78, 1 = 0x31 ).
+            ChainId::Id(felt) => format!("{felt:#x}"),
+            _ => format!("0x{}", hex::encode(self.to_string())),
+        }
     }
 }
 
@@ -425,3 +453,41 @@ pub struct SequencerPublicKey(pub PublicKey);
     Debug, Default, Clone, Copy, Eq, PartialEq, Hash, Deserialize, Serialize, PartialOrd, Ord,
 )]
 pub struct SequencerContractAddress(pub ContractAddress);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_chain_id_from_string() {
+        assert_eq!(ChainId::from("SN_MAIN".to_string()), ChainId::Mainnet);
+        assert_eq!(ChainId::from("SN_SEPOLIA".to_string()), ChainId::Sepolia);
+        assert_eq!(
+            ChainId::from("SN_INTEGRATION_SEPOLIA".to_string()),
+            ChainId::IntegrationSepolia
+        );
+        assert_eq!(ChainId::from("0x1".to_string()), ChainId::Id(Felt::from(1)));
+        assert_eq!(ChainId::from("custom".to_string()), ChainId::Other("custom".to_string()));
+    }
+
+    #[test]
+    fn test_chain_id_display() {
+        assert_eq!(ChainId::Mainnet.to_string(), "SN_MAIN");
+        assert_eq!(ChainId::Sepolia.to_string(), "SN_SEPOLIA");
+        assert_eq!(ChainId::IntegrationSepolia.to_string(), "SN_INTEGRATION_SEPOLIA");
+        assert_eq!(ChainId::Id(Felt::from(1)).to_string(), "0x1");
+        assert_eq!(ChainId::Other("custom".to_string()).to_string(), "custom");
+    }
+
+    #[test]
+    fn test_chain_id_as_hex() {
+        assert_eq!(ChainId::Mainnet.as_hex(), "0x534e5f4d41494e");
+        assert_eq!(ChainId::Sepolia.as_hex(), "0x534e5f5345504f4c4941");
+        assert_eq!(
+            ChainId::IntegrationSepolia.as_hex(),
+            "0x534e5f494e544547524154494f4e5f5345504f4c4941"
+        );
+        assert_eq!(ChainId::Id(Felt::from(1)).as_hex(), "0x1");
+        assert_eq!(ChainId::Other("custom".to_string()).as_hex(), "0x637573746f6d");
+    }
+}
