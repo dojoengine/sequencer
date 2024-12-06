@@ -25,6 +25,10 @@ tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tracing.workspace = true
 tracing-test.workspace = true
 
+[dev-dependencies]
+assert_matches.workspace = true
+blockifier = { workspace = true, features = [ "testing" ] }
+
 [lints]
 workspace = true
 
