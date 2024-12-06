@@ -98,7 +98,7 @@ impl<S: StateReader> StatefulValidator<S> {
 
             // We will only do the post validation if we're running in fee-enabled mode. As it
             // verifies that the actual cost of validation is within sender bounds (ie tx max fee).
-            if !skip_fee_check {
+            if fee_check {
                 // Post validations.
                 PostValidationReport::verify(&tx_context, &actual_cost)?;
             }
