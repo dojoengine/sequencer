@@ -6,9 +6,7 @@ use thiserror::Error;
 
 use crate::blockifier::config::TransactionExecutorConfig;
 use crate::blockifier::transaction_executor::{
-    BLOCK_STATE_ACCESS_ERR,
-    TransactionExecutor,
-    TransactionExecutorError,
+    BLOCK_STATE_ACCESS_ERR, TransactionExecutor, TransactionExecutorError,
 };
 use crate::context::{BlockContext, TransactionContext};
 use crate::execution::call_info::CallInfo;
@@ -25,6 +23,10 @@ use crate::transaction::transactions::ValidatableTransaction;
 #[cfg(test)]
 #[path = "stateful_validator_test.rs"]
 pub mod stateful_validator_test;
+
+#[cfg(test)]
+#[path = "katana_stateful_validator_test.rs"]
+pub mod katana_stateful_validator_test;
 
 #[derive(Debug, Error)]
 pub enum StatefulValidatorError {

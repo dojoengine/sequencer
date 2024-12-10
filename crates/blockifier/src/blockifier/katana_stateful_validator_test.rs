@@ -1,7 +1,4 @@
-//! run with `cargo test --features testing`
-
-use assert_matches::assert_matches;
-use blockifier::{
+use crate::{
     blockifier::stateful_validator::{StatefulValidator, StatefulValidatorError},
     context::BlockContext,
     state::cached_state::CachedState,
@@ -11,6 +8,7 @@ use blockifier::{
         errors::{TransactionFeeError, TransactionPreValidationError},
     },
 };
+use assert_matches::assert_matches;
 use starknet_api::{
     class_hash, compiled_class_hash, contract_address,
     transaction::{InvokeTransaction as ApiInvokeTx, InvokeTransactionV1},
