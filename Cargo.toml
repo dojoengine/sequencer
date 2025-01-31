@@ -4,40 +4,40 @@
 resolver = "2"
 
 members = [
-  "crates/blockifier",
-  "crates/committer_cli",
-  "crates/gateway",
-  "crates/mempool",
-  "crates/mempool_infra",
-  "crates/mempool_node",
-  "crates/mempool_test_utils",
-  "crates/mempool_types",
-  "crates/native_blockifier",
-  "crates/papyrus_base_layer",
-  "crates/papyrus_common",
-  "crates/papyrus_config",
-  "crates/papyrus_execution",
-  "crates/papyrus_load_test",
-  "crates/papyrus_monitoring_gateway",
-  "crates/papyrus_network",
-  "crates/papyrus_node",
-  "crates/papyrus_p2p_sync",
-  "crates/papyrus_proc_macros",
-  "crates/papyrus_protobuf",
-  "crates/papyrus_rpc",
-  "crates/papyrus_storage",
-  "crates/papyrus_sync",
-  "crates/papyrus_test_utils",
-  "crates/sequencing/papyrus_block_builder",
-  "crates/sequencing/papyrus_consensus",
-  "crates/starknet_api",
-  "crates/starknet_client",
-  "crates/starknet_committer",
-  "crates/starknet_patricia",
-  "crates/starknet_sierra_compile",
-  "crates/task_executor",
-  "crates/tests-integration",
-  "workspace_tests",
+	"crates/blockifier",
+	"crates/committer_cli",
+	"crates/gateway",
+	"crates/mempool",
+	"crates/mempool_infra",
+	"crates/mempool_node",
+	"crates/mempool_test_utils",
+	"crates/mempool_types",
+	"crates/native_blockifier",
+	"crates/papyrus_base_layer",
+	"crates/papyrus_common",
+	"crates/papyrus_config",
+	"crates/papyrus_execution",
+	"crates/papyrus_load_test",
+	"crates/papyrus_monitoring_gateway",
+	"crates/papyrus_network",
+	"crates/papyrus_node",
+	"crates/papyrus_p2p_sync",
+	"crates/papyrus_proc_macros",
+	"crates/papyrus_protobuf",
+	"crates/papyrus_rpc",
+	"crates/papyrus_storage",
+	"crates/papyrus_sync",
+	"crates/papyrus_test_utils",
+	"crates/sequencing/papyrus_block_builder",
+	"crates/sequencing/papyrus_consensus",
+	"crates/starknet_api",
+	"crates/starknet_client",
+	"crates/starknet_committer",
+	"crates/starknet_patricia",
+	"crates/starknet_sierra_compile",
+	"crates/task_executor",
+	"crates/tests-integration",
+	"workspace_tests",
 ]
 
 [workspace.package]
@@ -70,11 +70,11 @@ byteorder = "1.4.3"
 bytes = "1"
 cached = "0.44.0"
 cairo-felt = "0.9.1"
-cairo-lang-casm = "2.7.0"
-cairo-lang-runner = "2.7.0"
-cairo-lang-sierra = "=2.7.0"
-cairo-lang-starknet-classes = "2.7.0"
-cairo-lang-utils = "2.7.0"
+cairo-lang-casm = "2.9.2"
+cairo-lang-runner = "2.9.2"
+cairo-lang-sierra = "=2.9.2"
+cairo-lang-starknet-classes = "2.9.2"
+cairo-lang-utils = "2.9.2"
 cairo-vm = "=1.0.1"
 camelpaste = "0.1.0"
 chrono = "0.4.26"

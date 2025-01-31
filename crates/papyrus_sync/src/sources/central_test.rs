@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use assert_matches::assert_matches;
 use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use futures_util::pin_mut;
-use indexmap::{indexmap, IndexMap};
+use indexmap::{IndexMap, indexmap};
 use lru::LruCache;
 use mockall::predicate;
 use papyrus_storage::class::ClassStorageWriter;
@@ -14,12 +14,7 @@ use pretty_assertions::assert_eq;
 use reqwest::StatusCode;
 use starknet_api::block::{BlockHash, BlockNumber};
 use starknet_api::core::{
-    ClassHash,
-    CompiledClassHash,
-    ContractAddress,
-    GlobalRoot,
-    Nonce,
-    PatriciaKey,
+    ClassHash, CompiledClassHash, ContractAddress, GlobalRoot, Nonce, PatriciaKey,
     SequencerPublicKey,
 };
 use starknet_api::crypto::utils::PublicKey;
@@ -27,25 +22,17 @@ use starknet_api::deprecated_contract_class::ContractClass as DeprecatedContract
 use starknet_api::hash::StarkHash;
 use starknet_api::state::{ContractClass as sn_api_ContractClass, StorageKey, ThinStateDiff};
 use starknet_api::{felt, patricia_key};
+use starknet_client::ClientError;
 use starknet_client::reader::objects::block::BlockPostV0_13_1;
 use starknet_client::reader::{
-    Block,
-    BlockSignatureData,
-    ContractClass,
-    DeclaredClassHashEntry,
-    DeployedContract,
-    GenericContractClass,
-    MockStarknetReader,
-    ReaderClientError,
-    ReplacedClass,
-    StateUpdate,
+    Block, BlockSignatureData, ContractClass, DeclaredClassHashEntry, DeployedContract,
+    GenericContractClass, MockStarknetReader, ReaderClientError, ReplacedClass, StateUpdate,
     StorageEntry,
 };
-use starknet_client::ClientError;
 use tokio_stream::StreamExt;
 
-use super::state_update_stream::StateUpdateStreamConfig;
 use super::ApiContractClass;
+use super::state_update_stream::StateUpdateStreamConfig;
 use crate::sources::central::{CentralError, CentralSourceTrait, GenericCentralSource};
 
 const TEST_CONCURRENT_REQUESTS: usize = 300;
@@ -462,35 +449,29 @@ async fn stream_compiled_classes() {
     writer
         .begin_rw_txn()
         .unwrap()
-        .append_state_diff(
-            BlockNumber(0),
-            ThinStateDiff {
-                deployed_contracts: indexmap! {},
-                storage_diffs: indexmap! {},
-                declared_classes: indexmap! {
-                    ClassHash(felt!("0x0")) => CompiledClassHash(felt!("0x0")),
-                    ClassHash(felt!("0x1")) => CompiledClassHash(felt!("0x1")),
-                },
-                deprecated_declared_classes: vec![],
-                nonces: indexmap! {},
-                replaced_classes: indexmap! {},
+        .append_state_diff(BlockNumber(0), ThinStateDiff {
+            deployed_contracts: indexmap! {},
+            storage_diffs: indexmap! {},
+            declared_classes: indexmap! {
+                ClassHash(felt!("0x0")) => CompiledClassHash(felt!("0x0")),
+                ClassHash(felt!("0x1")) => CompiledClassHash(felt!("0x1")),
             },
-        )
+            deprecated_declared_classes: vec![],
+            nonces: indexmap! {},
+            replaced_classes: indexmap! {},
+        })
         .unwrap()
-        .append_state_diff(
-            BlockNumber(1),
-            ThinStateDiff {
-                deployed_contracts: indexmap! {},
-                storage_diffs: indexmap! {},
-                declared_classes: indexmap! {
-                    ClassHash(felt!("0x2")) => CompiledClassHash(felt!("0x2")),
-                    ClassHash(felt!("0x3")) => CompiledClassHash(felt!("0x3")),
-                },
-                deprecated_declared_classes: vec![],
-                nonces: indexmap! {},
-                replaced_classes: indexmap! {},
+        .append_state_diff(BlockNumber(1), ThinStateDiff {
+            deployed_contracts: indexmap! {},
+            storage_diffs: indexmap! {},
+            declared_classes: indexmap! {
+                ClassHash(felt!("0x2")) => CompiledClassHash(felt!("0x2")),
+                ClassHash(felt!("0x3")) => CompiledClassHash(felt!("0x3")),
             },
-        )
+            deprecated_declared_classes: vec![],
+            nonces: indexmap! {},
+            replaced_classes: indexmap! {},
+        })
         .unwrap()
         .append_classes(
             BlockNumber(0),
@@ -516,10 +497,10 @@ async fn stream_compiled_classes() {
     let felts: Vec<_> = (0..4).map(|i| felt!(format!("0x{i}").as_str())).collect();
     let mut mock = MockStarknetReader::new();
     for felt in felts.clone() {
-        mock.expect_compiled_class_by_hash()
-            .with(predicate::eq(ClassHash(felt)))
-            .times(1)
-            .returning(move |_x| Ok(Some(CasmContractClass::default())));
+        // mock.expect_compiled_class_by_hash()
+        //     .with(predicate::eq(ClassHash(felt)))
+        //     .times(1)
+        //     .returning(move |_x| Ok(Some(CasmContractClass::default())));
     }
 
     let central_source = GenericCentralSource {
@@ -534,7 +515,7 @@ async fn stream_compiled_classes() {
     let stream = central_source.stream_compiled_classes(BlockNumber(0), BlockNumber(2));
     pin_mut!(stream);
 
-    let expected_compiled_class = CasmContractClass::default();
+    let expected_compiled_class: CasmContractClass = todo!();
     for felt in felts {
         let (class_hash, compiled_class_hash, compiled_class) =
             stream.next().await.unwrap().unwrap();
@@ -597,7 +578,7 @@ async fn get_compiled_class() {
     let mut mock = MockStarknetReader::new();
 
     let class_hash = ClassHash(StarkHash::ONE);
-    let compiled_class = CasmContractClass::default();
+    let compiled_class: CasmContractClass = todo!();
     let compiled_class_clone = compiled_class.clone();
     mock.expect_compiled_class_by_hash()
         .with(predicate::eq(class_hash))

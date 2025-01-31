@@ -14,29 +14,21 @@ use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
 use mockall::automock;
 use papyrus_common::pending_classes::ApiContractClass;
 use serde::{Deserialize, Serialize};
+use starknet_api::StarknetApiError;
 use starknet_api::block::BlockNumber;
 use starknet_api::core::{ClassHash, SequencerPublicKey};
 use starknet_api::deprecated_contract_class::ContractClass as DeprecatedContractClass;
 use starknet_api::transaction::TransactionHash;
-use starknet_api::StarknetApiError;
 use starknet_types_core::felt::Felt;
 use tracing::{debug, error, instrument};
 use url::Url;
 
 pub use crate::reader::objects::block::{
-    Block,
-    BlockSignatureData,
-    BlockSignatureMessage,
-    TransactionReceiptsError,
+    Block, BlockSignatureData, BlockSignatureMessage, TransactionReceiptsError,
 };
 pub use crate::reader::objects::pending_data::PendingData;
 pub use crate::reader::objects::state::{
-    ContractClass,
-    DeclaredClassHashEntry,
-    DeployedContract,
-    ReplacedClass,
-    StateDiff,
-    StateUpdate,
+    ContractClass, DeclaredClassHashEntry, DeployedContract, ReplacedClass, StateDiff, StateUpdate,
     StorageEntry,
 };
 #[cfg(doc)]
@@ -298,8 +290,9 @@ impl StarknetReader for StarknetFeederGatewayClient {
         ]
         .contains(&class_hash)
         {
-            debug!("Using default compiled class for class hash {}.", class_hash);
-            return Ok(Some(CasmContractClass::default()));
+            // debug!("Using default compiled class for class hash {}.", class_hash);
+            // return Ok(Some(CasmContractClass::default()));
+            todo!()
         }
 
         let mut url = self.urls.get_compiled_class_by_class_hash.clone();

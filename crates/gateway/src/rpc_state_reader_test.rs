@@ -1,7 +1,4 @@
-use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::state_api::StateReader;
-use cairo_lang_starknet_classes::casm_contract_class::CasmContractClass;
-use papyrus_rpc::CompiledContractClass;
 use serde::Serialize;
 use serde_json::json;
 use starknet_api::block::{BlockNumber, GasPrice};
@@ -10,16 +7,8 @@ use starknet_api::{class_hash, contract_address, felt, patricia_key};
 
 use crate::config::RpcStateReaderConfig;
 use crate::rpc_objects::{
-    BlockHeader,
-    BlockId,
-    GetBlockWithTxHashesParams,
-    GetClassHashAtParams,
-    GetCompiledContractClassParams,
-    GetNonceParams,
-    GetStorageAtParams,
-    ResourcePrice,
-    RpcResponse,
-    RpcSuccessResponse,
+    BlockHeader, BlockId, GetBlockWithTxHashesParams, GetClassHashAtParams, GetNonceParams,
+    GetStorageAtParams, ResourcePrice, RpcResponse, RpcSuccessResponse,
 };
 use crate::rpc_state_reader::RpcStateReader;
 use crate::state_reader::MempoolStateReader;
@@ -151,33 +140,35 @@ async fn test_get_nonce_at() {
 
 #[tokio::test]
 async fn test_get_compiled_contract_class() {
-    let mut server = run_rpc_server().await;
-    let config = RpcStateReaderConfig { url: server.url(), ..Default::default() };
+    // let mut server = run_rpc_server().await;
+    // let config = RpcStateReaderConfig { url: server.url(), ..Default::default() };
 
-    let expected_result = CasmContractClass::default();
+    // let expected_result = CasmContractClass::default();
 
-    let mock = mock_rpc_interaction(
-        &mut server,
-        &config.json_rpc_version,
-        "starknet_getCompiledContractClass",
-        GetCompiledContractClassParams {
-            block_id: BlockId::Latest,
-            class_hash: class_hash!("0x1"),
-        },
-        &RpcResponse::Success(RpcSuccessResponse {
-            result: serde_json::to_value(CompiledContractClass::V1(expected_result)).unwrap(),
-            ..Default::default()
-        }),
-    );
+    // let mock = mock_rpc_interaction(
+    //     &mut server,
+    //     &config.json_rpc_version,
+    //     "starknet_getCompiledContractClass",
+    //     GetCompiledContractClassParams {
+    //         block_id: BlockId::Latest,
+    //         class_hash: class_hash!("0x1"),
+    //     },
+    //     &RpcResponse::Success(RpcSuccessResponse {
+    //         result: serde_json::to_value(CompiledContractClass::V1(expected_result)).unwrap(),
+    //         ..Default::default()
+    //     }),
+    // );
 
-    let client = RpcStateReader::from_latest(&config);
-    let result =
-        tokio::task::spawn_blocking(move || client.get_compiled_contract_class(class_hash!("0x1")))
-            .await
-            .unwrap()
-            .unwrap();
-    assert_eq!(result, ContractClass::V1(CasmContractClass::default().try_into().unwrap()));
-    mock.assert_async().await;
+    // let client = RpcStateReader::from_latest(&config);
+    // let result =
+    //     tokio::task::spawn_blocking(move || client.get_compiled_contract_class(class_hash!("0x1")))
+    //         .await
+    //         .unwrap()
+    //         .unwrap();
+    // assert_eq!(result, ContractClass::V1(CasmContractClass::default().try_into().unwrap()));
+    // mock.assert_async().await;
+
+    todo!()
 }
 
 #[tokio::test]
