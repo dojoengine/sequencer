@@ -4,7 +4,7 @@ use std::ops::Add;
 
 use cairo_vm::vm::runners::cairo_runner::ExecutionResources;
 use serde::Serialize;
-use starknet_api::core::{ClassHash, ContractAddress, EthAddress, PatriciaKey};
+use starknet_api::core::{ClassHash, ContractAddress, PatriciaKey};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{EventContent, L2ToL1Payload};
 use starknet_api::{felt, patricia_key};
@@ -55,7 +55,7 @@ impl MessageL1CostInfo {
 
 #[derive(Clone, Debug, Default, Eq, PartialEq, Serialize)]
 pub struct MessageToL1 {
-    pub to_address: EthAddress,
+    pub to_address: Felt,
     pub payload: L2ToL1Payload,
 }
 
@@ -144,7 +144,7 @@ impl TestExecutionSummary {
                     .map(|i| OrderedL2ToL1Message {
                         order: i,
                         message: MessageToL1 {
-                            to_address: EthAddress::default(),
+                            to_address: Felt::default(),
                             payload: L2ToL1Payload(vec![Felt::default()]),
                         },
                     })

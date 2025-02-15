@@ -1,29 +1,12 @@
 use indexmap::indexmap;
 use starknet_api::block_hash::block_hash_calculator::{
-    TransactionHashingData,
-    TransactionOutputForHash,
+    TransactionHashingData, TransactionOutputForHash,
 };
-use starknet_api::core::{
-    ClassHash,
-    CompiledClassHash,
-    ContractAddress,
-    EthAddress,
-    Nonce,
-    PatriciaKey,
-};
+use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::state::{StorageKey, ThinStateDiff};
 use starknet_api::transaction::{
-    Event,
-    EventContent,
-    EventData,
-    EventKey,
-    Fee,
-    GasVector,
-    L2ToL1Payload,
-    MessageToL1,
-    RevertedTransactionExecutionStatus,
-    TransactionExecutionStatus,
-    TransactionHash,
+    Event, EventContent, EventData, EventKey, Fee, GasVector, L2ToL1Payload, MessageToL1,
+    RevertedTransactionExecutionStatus, TransactionExecutionStatus, TransactionHash,
     TransactionSignature,
 };
 use starknet_types_core::felt::Felt;
@@ -52,8 +35,7 @@ pub(crate) fn get_transaction_output_for_hash(
         gas_consumed: GasVector { l1_gas: 0, l1_data_gas: 64 },
         messages_sent: vec![MessageToL1 {
             from_address: ContractAddress(PatriciaKey::from(2_u128)),
-            to_address: EthAddress::try_from(Felt::from_bytes_be_slice(&[1_u8]))
-                .expect("to_address"),
+            to_address: Felt::from_bytes_be_slice(&[1_u8]),
             payload: L2ToL1Payload(vec![Felt::from_bytes_be_slice(&[0_u8])]),
         }],
     }

@@ -9,7 +9,7 @@ use num_traits::Pow;
 use once_cell::sync::Lazy;
 use pretty_assertions::assert_eq;
 use rstest::{fixture, rstest};
-use starknet_api::core::{ChainId, ClassHash, ContractAddress, EthAddress, Nonce, PatriciaKey};
+use starknet_api::core::{ChainId, ClassHash, ContractAddress, Nonce, PatriciaKey};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::{
@@ -684,7 +684,7 @@ fn test_invoke_tx_advanced_operations(
     let expected_msg = OrderedL2ToL1Message {
         order: 0,
         message: MessageToL1 {
-            to_address: EthAddress::try_from(to_address).unwrap(),
+            to_address,
             payload: L2ToL1Payload(vec![felt!(12_u32), felt!(34_u32)]),
         },
     };
