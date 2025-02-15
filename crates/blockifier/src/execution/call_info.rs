@@ -4,7 +4,7 @@ use std::ops::{Add, AddAssign};
 
 use cairo_vm::vm::runners::cairo_runner::ExecutionResources;
 use serde::Serialize;
-use starknet_api::core::{ClassHash, ContractAddress, EthAddress};
+use starknet_api::core::{ClassHash, ContractAddress};
 use starknet_api::execution_resources::{GasAmount, GasVector};
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::fields::GasVectorComputationMode;
@@ -40,7 +40,7 @@ pub struct OrderedEvent {
 #[cfg_attr(feature = "transaction_serde", derive(serde::Deserialize))]
 #[derive(Debug, Default, Eq, PartialEq, Serialize)]
 pub struct MessageToL1 {
-    pub to_address: EthAddress,
+    pub to_address: Felt,
     pub payload: L2ToL1Payload,
 }
 

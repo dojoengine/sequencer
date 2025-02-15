@@ -5,7 +5,7 @@ use blockifier::{
     blockifier::stateful_validator::{StatefulValidator, StatefulValidatorError},
     context::BlockContext,
     state::cached_state::CachedState,
-    test_utils::{CairoVersion, contracts::FeatureContract, dict_state_reader::DictStateReader},
+    test_utils::{contracts::FeatureContract, dict_state_reader::DictStateReader, CairoVersion, RunnableCairo1},
     transaction::{
         account_transaction::{AccountTransaction, ExecutionFlags},
         errors::{TransactionFeeError, TransactionPreValidationError},
@@ -23,7 +23,7 @@ use starknet_api::{
 fn state() -> CachedState<DictStateReader> {
     let class_hash = class_hash!("0x1337");
     let compiled_class_hash = compiled_class_hash!(0x1337);
-    let class = FeatureContract::AccountWithLongValidate(CairoVersion::Cairo1).get_runnable_class();
+    let class = FeatureContract::AccountWithLongValidate(CairoVersion::Cairo1(RunnableCairo1::Casm)).get_runnable_class();
     let address = contract_address!("0x80085");
 
     let mut dict = DictStateReader::default();
@@ -64,10 +64,9 @@ fn test_stateful_validator_skip_all() {
     let initial_nonce = validator.get_nonce(sender).expect("failed to get initial nonce");
 
     let skip_validate = true;
-    let skip_fee_check = false;
 
     validator
-        .perform_validations(tx, skip_validate, skip_fee_check)
+        .perform_validations(tx, skip_validate)
         .expect("failed to validate transaction");
 
     // check nonce is update
@@ -99,10 +98,9 @@ fn test_stateful_validator_fail_account_validation() {
     let initial_nonce = validator.get_nonce(sender).expect("failed to get initial nonce");
 
     let skip_validate = false;
-    let skip_fee_check = true;
 
     let err = validator
-        .perform_validations(tx, skip_validate, skip_fee_check)
+        .perform_validations(tx, skip_validate)
         .expect_err("should fail due to no signature");
 
     assert_matches!(err, StatefulValidatorError::TransactionExecutionError(..));
@@ -136,10 +134,9 @@ fn test_stateful_validator_fail_fee_check() {
     let initial_nonce = validator.get_nonce(sender).expect("failed to get initial nonce");
 
     let skip_validate = true;
-    let skip_fee_check = false;
 
     let err = validator
-        .perform_validations(tx, skip_validate, skip_fee_check)
+        .perform_validations(tx, skip_validate)
         .expect_err("should fail due to no balance");
 
     assert_matches!(

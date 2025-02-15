@@ -7,12 +7,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use starknet_api::core::{
-    ClassHash,
-    CompiledClassHash,
-    ContractAddress,
-    EntryPointSelector,
-    EthAddress,
-    Nonce,
+    ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce,
 };
 use starknet_api::execution_resources::{GasAmount, GasVector};
 use starknet_api::hash::StarkHash;
@@ -43,6 +38,7 @@ use starknet_api::transaction::{
     TransactionOutput,
     TransactionVersion,
 };
+use starknet_types_core::felt::Felt;
 use strum_macros::EnumIter;
 use tracing::error;
 
@@ -840,7 +836,7 @@ pub struct L1ToL2Nonce(pub StarkHash);
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone, Eq, PartialEq)]
 pub struct L1ToL2Message {
-    pub from_address: EthAddress,
+    pub from_address: Felt,
     pub to_address: ContractAddress,
     pub selector: EntryPointSelector,
     pub payload: L1ToL2Payload,
@@ -860,7 +856,7 @@ impl From<L1ToL2Message> for starknet_api::transaction::MessageToL2 {
 #[derive(Debug, Default, Deserialize, Serialize, Clone, Eq, PartialEq)]
 pub struct L2ToL1Message {
     pub from_address: ContractAddress,
-    pub to_address: EthAddress,
+    pub to_address: Felt,
     pub payload: L2ToL1Payload,
 }
 

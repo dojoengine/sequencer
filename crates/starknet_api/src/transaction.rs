@@ -6,13 +6,7 @@ use starknet_types_core::felt::Felt;
 
 use crate::block::{BlockHash, BlockNumber};
 use crate::core::{
-    ChainId,
-    ClassHash,
-    CompiledClassHash,
-    ContractAddress,
-    EntryPointSelector,
-    EthAddress,
-    Nonce,
+    ChainId, ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce,
 };
 use crate::data_availability::DataAvailabilityMode;
 use crate::execution_resources::ExecutionResources;
@@ -28,17 +22,11 @@ use crate::transaction::fields::{
     ValidResourceBounds,
 };
 use crate::transaction_hash::{
-    get_declare_transaction_v0_hash,
-    get_declare_transaction_v1_hash,
-    get_declare_transaction_v2_hash,
-    get_declare_transaction_v3_hash,
-    get_deploy_account_transaction_v1_hash,
-    get_deploy_account_transaction_v3_hash,
-    get_deploy_transaction_hash,
-    get_invoke_transaction_v0_hash,
-    get_invoke_transaction_v1_hash,
-    get_invoke_transaction_v3_hash,
-    get_l1_handler_transaction_hash,
+    get_declare_transaction_v0_hash, get_declare_transaction_v1_hash,
+    get_declare_transaction_v2_hash, get_declare_transaction_v3_hash,
+    get_deploy_account_transaction_v1_hash, get_deploy_account_transaction_v3_hash,
+    get_deploy_transaction_hash, get_invoke_transaction_v0_hash, get_invoke_transaction_v1_hash,
+    get_invoke_transaction_v3_hash, get_l1_handler_transaction_hash,
 };
 use crate::{executable_transaction, StarknetApiError};
 
@@ -894,7 +882,7 @@ pub fn signed_tx_version(
 /// An L1 to L2 message.
 #[derive(Debug, Default, Clone, Eq, PartialEq, Hash, Deserialize, Serialize, PartialOrd, Ord)]
 pub struct MessageToL2 {
-    pub from_address: EthAddress,
+    pub from_address: Felt,
     pub payload: L1ToL2Payload,
 }
 
@@ -902,7 +890,7 @@ pub struct MessageToL2 {
 #[derive(Debug, Default, Clone, Eq, PartialEq, Hash, Deserialize, Serialize, PartialOrd, Ord)]
 pub struct MessageToL1 {
     pub from_address: ContractAddress,
-    pub to_address: EthAddress,
+    pub to_address: Felt,
     pub payload: L2ToL1Payload,
 }
 

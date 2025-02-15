@@ -54,7 +54,6 @@ use starknet_api::core::{
     CompiledClassHash,
     ContractAddress,
     EntryPointSelector,
-    EthAddress,
     Nonce,
     PatriciaKey,
     SequencerContractAddress,
@@ -193,10 +192,7 @@ lazy_static! {
     // A message from L1 contract at address 0x987 to the contract at CONTRACT_ADDRESS that calls
     // the entry point "l1_handle" with the value 0x123, the retdata should be 0x123.
     pub static ref MESSAGE_FROM_L1: MessageFromL1 = MessageFromL1 {
-        from_address: EthAddress::try_from(felt!(
-            "0x987"
-        ))
-        .unwrap(),
+        from_address: felt!("0x987"),
         to_address: *CONTRACT_ADDRESS,
         entry_point_selector: selector_from_name("l1_handle"),
         payload: calldata![
@@ -1208,7 +1204,7 @@ fn message_from_l1_to_l1_handler_tx() {
     assert_eq!(l1_handler_tx.contract_address, *CONTRACT_ADDRESS);
     assert_eq!(l1_handler_tx.entry_point_selector, selector_from_name("l1_handle"));
     // The first item of calldata is the from_address.
-    let from_address = EthAddress::try_from(*l1_handler_tx.calldata.0.first().unwrap()).unwrap();
+    let from_address = *l1_handler_tx.calldata.0.first().unwrap();
     assert_eq!(from_address, MESSAGE_FROM_L1.from_address);
     let rest_of_calldata = &l1_handler_tx.calldata.0[1..];
     assert_eq!(rest_of_calldata, MESSAGE_FROM_L1.payload.0.as_slice());
