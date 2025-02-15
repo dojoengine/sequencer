@@ -385,6 +385,7 @@ impl TryFrom<protobuf::MessageToL1> for MessageToL1 {
 
         let to_address =
             EthAddress::try_from(value.to_address.ok_or(missing("MessageToL1::to_address"))?)?;
+        let to_address = Felt::from(to_address);
 
         let payload = L2ToL1Payload(
             value.payload.into_iter().map(Felt::try_from).collect::<Result<Vec<_>, _>>()?,
@@ -397,7 +398,9 @@ impl TryFrom<protobuf::MessageToL1> for MessageToL1 {
 impl From<MessageToL1> for protobuf::MessageToL1 {
     fn from(value: MessageToL1) -> Self {
         let from_address = Felt::from(value.from_address).into();
-        let to_address = value.to_address.into();
+        // Note(@kariy): this is probably not very safe but we don't use this crate so it's fine for our purposes.
+        let to_address =
+            protobuf::EthereumAddress { elements: value.to_address.to_bytes_be().to_vec() };
         let payload = value.payload.0.into_iter().map(protobuf::Felt252::from).collect();
         protobuf::MessageToL1 {
             from_address: Some(from_address),
