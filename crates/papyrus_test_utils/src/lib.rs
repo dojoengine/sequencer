@@ -13,17 +13,10 @@ use std::sync::Arc;
 
 use cairo_lang_casm::hints::{CoreHint, CoreHintBase, Hint};
 use cairo_lang_casm::operand::{
-    BinOpOperand,
-    CellRef,
-    DerefOrImmediate,
-    Operation,
-    Register,
-    ResOperand,
+    BinOpOperand, CellRef, DerefOrImmediate, Operation, Register, ResOperand,
 };
 use cairo_lang_starknet_classes::casm_contract_class::{
-    CasmContractClass,
-    CasmContractEntryPoint,
-    CasmContractEntryPoints,
+    CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints,
 };
 use cairo_lang_starknet_classes::NestedIntList;
 use cairo_lang_utils::bigint::BigUintAsHex;
@@ -51,17 +44,8 @@ use starknet_api::block::{
 };
 use starknet_api::contract_class::EntryPointType;
 use starknet_api::core::{
-    ClassHash,
-    CompiledClassHash,
-    ContractAddress,
-    EntryPointSelector,
-    EthAddress,
-    EventCommitment,
-    GlobalRoot,
-    Nonce,
-    ReceiptCommitment,
-    SequencerContractAddress,
-    StateDiffCommitment,
+    ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, EthAddress, EventCommitment,
+    GlobalRoot, Nonce, ReceiptCommitment, SequencerContractAddress, StateDiffCommitment,
     TransactionCommitment,
 };
 use starknet_api::crypto::utils::Signature;
@@ -716,12 +700,12 @@ auto_impl_get_test_instance! {
     pub struct L1ToL2Payload(pub Vec<Felt>);
     pub struct L2ToL1Payload(pub Vec<Felt>);
     pub struct MessageToL1 {
-        pub to_address: EthAddress,
+        pub to_address: Felt,
         pub payload: L2ToL1Payload,
         pub from_address: ContractAddress,
     }
     pub struct MessageToL2 {
-        pub from_address: EthAddress,
+        pub from_address: Felt,
         pub payload: L1ToL2Payload,
     }
     pub struct Nonce(pub Felt);

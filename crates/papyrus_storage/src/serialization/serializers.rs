@@ -7,9 +7,7 @@ use std::sync::Arc;
 use byteorder::BigEndian;
 use cairo_lang_casm::hints::Hint;
 use cairo_lang_starknet_classes::casm_contract_class::{
-    CasmContractClass,
-    CasmContractEntryPoint,
-    CasmContractEntryPoints,
+    CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints,
 };
 use cairo_lang_starknet_classes::NestedIntList;
 use cairo_lang_utils::bigint::BigUintAsHex;
@@ -19,29 +17,13 @@ use num_bigint::BigUint;
 use parity_scale_codec::{Decode, Encode};
 use primitive_types::H160;
 use starknet_api::block::{
-    BlockHash,
-    BlockNumber,
-    BlockSignature,
-    BlockStatus,
-    BlockTimestamp,
-    GasPrice,
-    GasPricePerToken,
-    StarknetVersion,
+    BlockHash, BlockNumber, BlockSignature, BlockStatus, BlockTimestamp, GasPrice,
+    GasPricePerToken, StarknetVersion,
 };
 use starknet_api::contract_class::EntryPointType;
 use starknet_api::core::{
-    ClassHash,
-    CompiledClassHash,
-    ContractAddress,
-    EntryPointSelector,
-    EthAddress,
-    EventCommitment,
-    GlobalRoot,
-    Nonce,
-    PatriciaKey,
-    ReceiptCommitment,
-    SequencerContractAddress,
-    StateDiffCommitment,
+    ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, EventCommitment, GlobalRoot,
+    Nonce, PatriciaKey, ReceiptCommitment, SequencerContractAddress, StateDiffCommitment,
     TransactionCommitment,
 };
 use starknet_api::crypto::utils::Signature;
@@ -129,11 +111,7 @@ use tracing::warn;
 use crate::body::events::EventIndex;
 use crate::body::TransactionIndex;
 use crate::compression_utils::{
-    compress,
-    decompress,
-    decompress_from_reader,
-    serialize_and_compress,
-    IsCompressed,
+    compress, decompress, decompress_from_reader, serialize_and_compress, IsCompressed,
 };
 use crate::db::serialization::{StorageSerde, StorageSerdeError};
 use crate::db::table_types::NoValue;
@@ -257,8 +235,8 @@ auto_storage_serde! {
         External = 1,
         L1Handler = 2,
     }
-    // TODO(dan): consider implementing directly with no H160 dependency.
-    pub struct EthAddress(pub H160);
+    // // TODO(dan): consider implementing directly with no H160 dependency.
+    // pub struct EthAddress(pub H160);
     pub struct EventAbiEntry {
         pub data: Vec<TypedParameter>,
         pub keys: Vec<TypedParameter>,
@@ -327,12 +305,12 @@ auto_storage_serde! {
         BaseLayerBlock = 6,
     }
     pub struct MessageToL1 {
-        pub to_address: EthAddress,
+        pub to_address: Felt,
         pub payload: L2ToL1Payload,
         pub from_address: ContractAddress,
     }
     pub struct MessageToL2 {
-        pub from_address: EthAddress,
+        pub from_address: Felt,
         pub payload: L1ToL2Payload,
     }
     pub enum NestedIntList {

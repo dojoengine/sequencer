@@ -3,12 +3,7 @@ use std::collections::HashMap;
 use papyrus_test_utils::{auto_impl_get_test_instance, get_number_of_variants, GetTestInstance};
 use starknet_api::contract_class::EntryPointType;
 use starknet_api::core::{
-    ClassHash,
-    CompiledClassHash,
-    ContractAddress,
-    EntryPointSelector,
-    EthAddress,
-    Nonce,
+    ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, Nonce,
 };
 use starknet_api::execution_resources::GasVector;
 use starknet_api::hash::StarkHash;
@@ -35,20 +30,10 @@ use starknet_types_core::felt::Felt;
 
 use crate::reader::objects::state::ContractClass;
 use crate::reader::objects::transaction::{
-    Builtin,
-    DeployTransaction,
-    ExecutionResources,
-    IntermediateDeclareTransaction,
-    IntermediateDeployAccountTransaction,
-    IntermediateInvokeTransaction,
-    L1HandlerTransaction,
-    L1ToL2Message,
-    L1ToL2Nonce,
-    L2ToL1Message,
-    ReservedDataAvailabilityMode,
-    Transaction,
-    TransactionExecutionStatus,
-    TransactionReceipt,
+    Builtin, DeployTransaction, ExecutionResources, IntermediateDeclareTransaction,
+    IntermediateDeployAccountTransaction, IntermediateInvokeTransaction, L1HandlerTransaction,
+    L1ToL2Message, L1ToL2Nonce, L2ToL1Message, ReservedDataAvailabilityMode, Transaction,
+    TransactionExecutionStatus, TransactionReceipt,
 };
 
 auto_impl_get_test_instance! {
@@ -148,7 +133,7 @@ auto_impl_get_test_instance! {
         pub revert_error: Option<String>,
     }
     pub struct L1ToL2Message {
-        pub from_address: EthAddress,
+        pub from_address: Felt,
         pub to_address: ContractAddress,
         pub selector: EntryPointSelector,
         pub payload: L1ToL2Payload,
@@ -157,7 +142,7 @@ auto_impl_get_test_instance! {
     pub struct L1ToL2Nonce(pub StarkHash);
     pub struct L2ToL1Message {
         pub from_address: ContractAddress,
-        pub to_address: EthAddress,
+        pub to_address: Felt,
         pub payload: L2ToL1Payload,
     }
     pub struct ExecutionResources {

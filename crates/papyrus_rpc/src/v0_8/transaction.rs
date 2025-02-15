@@ -17,12 +17,7 @@ use papyrus_storage::StorageTxn;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use starknet_api::block::{BlockHash, BlockNumber, BlockStatus};
 use starknet_api::core::{
-    ClassHash,
-    CompiledClassHash,
-    ContractAddress,
-    EntryPointSelector,
-    EthAddress,
-    Nonce,
+    ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, EthAddress, Nonce,
 };
 use starknet_api::data_availability::DataAvailabilityMode;
 use starknet_api::execution_resources::GasAmount;
@@ -1263,15 +1258,14 @@ fn l1_handler_message_hash(
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct MessageFromL1 {
-    // TODO: fix serialization of EthAddress in SN_API to fit the spec.
-    #[serde(serialize_with = "serialize_eth_address")]
-    pub from_address: EthAddress,
+    pub from_address: Felt,
     pub to_address: ContractAddress,
     pub entry_point_selector: EntryPointSelector,
     pub payload: Calldata,
 }
 
 // Serialize EthAddress to a 40 character hex string with a 0x prefix.
+#[allow(unused)]
 fn serialize_eth_address<S>(eth_address: &EthAddress, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
@@ -1283,7 +1277,7 @@ where
 
 impl From<MessageFromL1> for L1HandlerTransaction {
     fn from(message: MessageFromL1) -> Self {
-        let sender_as_felt = eth_address_to_felt(message.from_address);
+        let sender_as_felt = message.from_address;
         let mut calldata = vec![sender_as_felt];
         calldata.extend_from_slice(&message.payload.0);
         let calldata = Calldata(Arc::new(calldata));
@@ -1298,6 +1292,7 @@ impl From<MessageFromL1> for L1HandlerTransaction {
 }
 
 // TODO(yair): move to SN_API and implement as From.
+#[allow(unused)]
 fn eth_address_to_felt(eth_address: EthAddress) -> Felt {
     let eth_address_as_bytes = eth_address.0.to_fixed_bytes();
     let mut bytes: [u8; 32] = [0; 32];
