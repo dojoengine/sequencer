@@ -18,7 +18,7 @@ use cairo_native::starknet::{
 };
 use num_bigint::BigUint;
 use starknet_api::contract_class::EntryPointType;
-use starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector, L1Address};
+use starknet_api::core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::execution_resources::GasAmount;
 use starknet_api::state::StorageKey;
 use starknet_api::transaction::fields::{Calldata, ContractAddressSalt, TransactionSignature};
@@ -586,10 +586,7 @@ impl StarknetSyscallHandler for &mut NativeSyscallHandler<'_> {
             self.gas_costs().syscalls.send_message_to_l1.base_syscall_cost(),
             SyscallSelector::SendMessageToL1,
         )?;
-
-        let to_address = L1Address::from(to_address);
         let message = MessageToL1 { to_address, payload: L2ToL1Payload(payload.to_vec()) };
-
         self.base.send_message_to_l1(message).map_err(|err| self.handle_error(remaining_gas, err))
     }
 

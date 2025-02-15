@@ -405,8 +405,7 @@ impl SyscallRequest for SendMessageToL1Request {
         vm: &VirtualMachine,
         ptr: &mut Relocatable,
     ) -> SyscallBaseResult<SendMessageToL1Request> {
-        let to_address_felt = felt_from_ptr(vm, ptr)?;
-        let to_address = to_address_felt.into();
+        let to_address = felt_from_ptr(vm, ptr)?;
         let payload = L2ToL1Payload(read_felt_array::<SyscallExecutorBaseError>(vm, ptr)?);
 
         Ok(SendMessageToL1Request { message: MessageToL1 { to_address, payload } })
