@@ -1,6 +1,5 @@
 use itertools::concat;
 use starknet_api::abi::abi_utils::selector_from_name;
-use starknet_api::core::EthAddress;
 use starknet_api::felt;
 use starknet_api::transaction::fields::Calldata;
 use starknet_api::transaction::L2ToL1Payload;
@@ -40,7 +39,6 @@ fn test_send_message_to_l1(cairo_version: CairoVersion) {
         ..trivial_external_entry_point_new(test_contract)
     };
 
-    let to_address = EthAddress::try_from(to_address).unwrap();
     let message = MessageToL1 { to_address, payload: L2ToL1Payload(payload) };
 
     pretty_assertions::assert_eq!(
