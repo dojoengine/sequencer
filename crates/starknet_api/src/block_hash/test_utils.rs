@@ -1,9 +1,8 @@
 use indexmap::indexmap;
-use primitive_types::H160;
 use starknet_types_core::felt::Felt;
 
 use super::block_hash_calculator::TransactionOutputForHash;
-use crate::core::{ClassHash, CompiledClassHash, ContractAddress, EthAddress, Nonce};
+use crate::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use crate::execution_resources::{GasAmount, GasVector};
 use crate::state::ThinStateDiff;
 use crate::transaction::fields::Fee;
@@ -35,7 +34,7 @@ pub(crate) fn get_transaction_output() -> TransactionOutputForHash {
 pub(crate) fn generate_message_to_l1(seed: u64) -> MessageToL1 {
     MessageToL1 {
         from_address: ContractAddress::from(seed),
-        to_address: EthAddress(H160::from_low_u64_be(seed + 1)),
+        to_address: Felt::from(seed + 1),
         payload: L2ToL1Payload(vec![Felt::from(seed + 2), Felt::from(seed + 3)]),
     }
 }

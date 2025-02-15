@@ -20,6 +20,7 @@ mod secp;
 mod send_message_to_l1;
 mod sha256;
 mod storage_read_write;
+mod katana_appchain_messaging_patch;
 
 #[derive(Debug)]
 pub struct DeterministicExecutionResources {
