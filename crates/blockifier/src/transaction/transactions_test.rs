@@ -1237,7 +1237,7 @@ fn test_declare_tx(
 
     // Verify class declaration.
     let contract_class_from_state = state.get_compiled_contract_class(class_hash).unwrap();
-    assert_eq!(contract_class_from_state, class_info.contract_class());
+    assert_eq!(contract_class_from_state, Arc::new(class_info.contract_class()));
 
     // Checks that redeclaring the same contract fails.
     let account_tx2 = declare_tx(

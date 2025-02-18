@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use derive_more::IntoIterator;
 use indexmap::IndexMap;
@@ -20,7 +21,7 @@ use crate::utils::{strict_subtract_mappings, subtract_mappings};
 #[path = "cached_state_test.rs"]
 mod test;
 
-pub type ContractClassMapping = HashMap<ClassHash, ContractClass>;
+pub type ContractClassMapping = HashMap<ClassHash, Arc<ContractClass>>;
 
 /// Caches read and write requests.
 ///
@@ -176,7 +177,10 @@ impl<S: StateReader> StateReader for CachedState<S> {
         Ok(*class_hash)
     }
 
-    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
+    fn get_compiled_contract_class(
+        &self,
+        class_hash: ClassHash,
+    ) -> StateResult<Arc<ContractClass>> {
         let mut cache = self.cache.borrow_mut();
         let class_hash_to_class = &mut *self.class_hash_to_class.borrow_mut();
 
@@ -261,7 +265,7 @@ impl<S: StateReader> State for CachedState<S> {
         class_hash: ClassHash,
         contract_class: ContractClass,
     ) -> StateResult<()> {
-        self.class_hash_to_class.get_mut().insert(class_hash, contract_class);
+        self.class_hash_to_class.get_mut().insert(class_hash, Arc::new(contract_class));
         let mut cache = self.cache.borrow_mut();
         cache.declare_contract(class_hash);
         Ok(())
@@ -496,7 +500,10 @@ impl<'a, S: StateReader + ?Sized> StateReader for MutRefState<'a, S> {
         self.0.get_class_hash_at(contract_address)
     }
 
-    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
+    fn get_compiled_contract_class(
+        &self,
+        class_hash: ClassHash,
+    ) -> StateResult<Arc<ContractClass>> {
         self.0.get_compiled_contract_class(class_hash)
     }
 

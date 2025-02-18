@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClassV0;
 use blockifier::state::cached_state::CachedState;
@@ -15,7 +16,7 @@ pub const TOKEN_FOR_TESTING_CONTRACT_PATH: &str =
 pub fn create_py_test_state() -> CachedState<DictStateReader> {
     let class_hash_to_class = HashMap::from([(
         class_hash!(TOKEN_FOR_TESTING_CLASS_HASH),
-        ContractClassV0::from_file(TOKEN_FOR_TESTING_CONTRACT_PATH).into(),
+        Arc::new(ContractClassV0::from_file(TOKEN_FOR_TESTING_CONTRACT_PATH).into()),
     )]);
     CachedState::from(DictStateReader { class_hash_to_class, ..Default::default() })
 }

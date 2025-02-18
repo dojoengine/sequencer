@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use blockifier::blockifier::block::BlockInfo;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::errors::StateError;
@@ -45,7 +47,10 @@ impl BlockifierStateReader for Box<dyn MempoolStateReader> {
         self.as_ref().get_class_hash_at(contract_address)
     }
 
-    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
+    fn get_compiled_contract_class(
+        &self,
+        class_hash: ClassHash,
+    ) -> StateResult<Arc<ContractClass>> {
         self.as_ref().get_compiled_contract_class(class_hash)
     }
 

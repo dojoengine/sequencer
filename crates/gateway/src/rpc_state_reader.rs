@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use blockifier::blockifier::block::BlockInfo;
 use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV1};
 use blockifier::state::errors::StateError;
@@ -14,17 +16,9 @@ use starknet_types_core::felt::Felt;
 use crate::config::RpcStateReaderConfig;
 use crate::errors::{serde_err_to_state_err, RPCStateReaderError, RPCStateReaderResult};
 use crate::rpc_objects::{
-    BlockHeader,
-    BlockId,
-    GetBlockWithTxHashesParams,
-    GetClassHashAtParams,
-    GetCompiledContractClassParams,
-    GetNonceParams,
-    GetStorageAtParams,
-    RpcResponse,
-    RPC_CLASS_HASH_NOT_FOUND,
-    RPC_ERROR_BLOCK_NOT_FOUND,
-    RPC_ERROR_CONTRACT_ADDRESS_NOT_FOUND,
+    BlockHeader, BlockId, GetBlockWithTxHashesParams, GetClassHashAtParams,
+    GetCompiledContractClassParams, GetNonceParams, GetStorageAtParams, RpcResponse,
+    RPC_CLASS_HASH_NOT_FOUND, RPC_ERROR_BLOCK_NOT_FOUND, RPC_ERROR_CONTRACT_ADDRESS_NOT_FOUND,
 };
 use crate::state_reader::{MempoolStateReader, StateReaderFactory};
 
@@ -125,7 +119,10 @@ impl BlockifierStateReader for RpcStateReader {
         }
     }
 
-    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
+    fn get_compiled_contract_class(
+        &self,
+        class_hash: ClassHash,
+    ) -> StateResult<Arc<ContractClass>> {
         let get_compiled_class_params =
             GetCompiledContractClassParams { class_hash, block_id: self.block_id };
 
@@ -134,12 +131,12 @@ impl BlockifierStateReader for RpcStateReader {
         let contract_class: CompiledContractClass =
             serde_json::from_value(result).map_err(serde_err_to_state_err)?;
         match contract_class {
-            CompiledContractClass::V1(contract_class_v1) => Ok(ContractClass::V1(
+            CompiledContractClass::V1(contract_class_v1) => Ok(Arc::new(ContractClass::V1(
                 ContractClassV1::try_from(contract_class_v1).map_err(StateError::ProgramError)?,
-            )),
-            CompiledContractClass::V0(contract_class_v0) => Ok(ContractClass::V0(
+            ))),
+            CompiledContractClass::V0(contract_class_v0) => Ok(Arc::new(ContractClass::V0(
                 ContractClassV0::try_from(contract_class_v0).map_err(StateError::ProgramError)?,
-            )),
+            ))),
         }
     }
 

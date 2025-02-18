@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use starknet_api::core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::state::StorageKey;
@@ -41,7 +42,8 @@ pub trait StateReader {
     fn get_class_hash_at(&self, contract_address: ContractAddress) -> StateResult<ClassHash>;
 
     /// Returns the contract class of the given class hash.
-    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass>;
+    fn get_compiled_contract_class(&self, class_hash: ClassHash)
+        -> StateResult<Arc<ContractClass>>;
 
     /// Returns the compiled class hash of the given class hash.
     fn get_compiled_class_hash(&self, class_hash: ClassHash) -> StateResult<CompiledClassHash>;

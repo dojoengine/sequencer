@@ -2,11 +2,7 @@ use std::collections::HashMap;
 
 use cairo_lang_runner::casm_run::format_next_item;
 use cairo_vm::serde::deserialize_program::{
-    deserialize_array_of_bigint_hex,
-    Attribute,
-    HintParams,
-    Identifier,
-    ReferenceManager,
+    deserialize_array_of_bigint_hex, Attribute, HintParams, Identifier, ReferenceManager,
 };
 use cairo_vm::types::builtin_name::BuiltinName;
 use cairo_vm::types::errors::program_errors::ProgramError;
@@ -27,11 +23,8 @@ use super::errors::ConstructorEntryPointExecutionError;
 use crate::execution::call_info::{CallInfo, Retdata};
 use crate::execution::contract_class::ContractClass;
 use crate::execution::entry_point::{
-    execute_constructor_entry_point,
-    CallEntryPoint,
-    ConstructorContext,
-    EntryPointExecutionContext,
-    EntryPointExecutionResult,
+    execute_constructor_entry_point, CallEntryPoint, ConstructorContext,
+    EntryPointExecutionContext, EntryPointExecutionResult,
 };
 use crate::execution::errors::PostExecutionError;
 use crate::execution::{deprecated_entry_point_execution, entry_point_execution};
@@ -46,7 +39,7 @@ pub const SEGMENT_ARENA_BUILTIN_SIZE: usize = 3;
 /// Executes a specific call to a contract entry point and returns its output.
 pub fn execute_entry_point_call(
     call: CallEntryPoint,
-    contract_class: ContractClass,
+    contract_class: &ContractClass,
     state: &mut dyn State,
     resources: &mut ExecutionResources,
     context: &mut EntryPointExecutionContext,
@@ -273,7 +266,11 @@ pub fn format_panic_data(felts: &[Felt]) -> String {
     while let Some(item) = format_next_item(&mut felts) {
         items.push(item.quote_if_string());
     }
-    if let [item] = &items[..] { item.clone() } else { format!("({})", items.join(", ")) }
+    if let [item] = &items[..] {
+        item.clone()
+    } else {
+        format!("({})", items.join(", "))
+    }
 }
 
 /// Returns the VM resources required for running `poseidon_hash_many` in the Starknet OS.

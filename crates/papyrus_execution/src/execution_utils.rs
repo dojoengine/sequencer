@@ -5,9 +5,7 @@ use std::path::PathBuf;
 // Expose the tool for creating entry point selectors from function names.
 pub use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::execution::contract_class::{
-    ContractClass as BlockifierContractClass,
-    ContractClassV0,
-    ContractClassV1,
+    ContractClass as BlockifierContractClass, ContractClassV0, ContractClassV1,
 };
 use blockifier::state::cached_state::{CachedState, CommitmentStateDiff, MutRefState};
 use blockifier::state::state_api::StateReader;
@@ -27,11 +25,7 @@ use thiserror::Error;
 use crate::objects::TransactionTrace;
 use crate::state_reader::ExecutionStateReader;
 use crate::{
-    BlockifierError,
-    ExecutableTransactionInput,
-    ExecutionConfig,
-    ExecutionError,
-    ExecutionResult,
+    BlockifierError, ExecutableTransactionInput, ExecutionConfig, ExecutionError, ExecutionResult,
 };
 
 // An error that can occur during the use of the execution utils.

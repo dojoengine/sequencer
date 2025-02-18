@@ -168,7 +168,7 @@ fn get_contract_class() {
     let state = test_state(&ChainInfo::create_for_testing(), 0, &[(test_contract, 0)]);
     assert_eq!(
         state.get_compiled_contract_class(test_contract.get_class_hash()).unwrap(),
-        test_contract.get_class()
+        Arc::new(test_contract.get_class())
     );
 
     // Negative flow.
@@ -215,7 +215,8 @@ fn cached_state_state_diff_conversion() {
     // are aligned with.
     let test_contract = FeatureContract::TestContract(CairoVersion::Cairo0);
     let test_class_hash = test_contract.get_class_hash();
-    let class_hash_to_class = HashMap::from([(test_class_hash, test_contract.get_class())]);
+    let class_hash_to_class =
+        HashMap::from([(test_class_hash, Arc::new(test_contract.get_class()))]);
 
     let nonce_initial_values = HashMap::new();
 
@@ -419,7 +420,7 @@ fn test_contract_cache_is_used() {
     // cache.
     let test_contract = FeatureContract::TestContract(CairoVersion::Cairo0);
     let class_hash = test_contract.get_class_hash();
-    let contract_class = test_contract.get_class();
+    let contract_class = Arc::new(test_contract.get_class());
     let mut reader = DictStateReader::default();
     reader.class_hash_to_class.insert(class_hash, contract_class.clone());
     let state = CachedState::new(reader);

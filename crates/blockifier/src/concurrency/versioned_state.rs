@@ -34,7 +34,7 @@ pub struct VersionedState<S: StateReader> {
     // the compiled contract classes mapping. Each key with value false, sohuld not apprear
     // in the compiled contract classes mapping.
     declared_contracts: VersionedStorage<ClassHash, bool>,
-    compiled_contract_classes: VersionedStorage<ClassHash, ContractClass>,
+    compiled_contract_classes: VersionedStorage<ClassHash, Arc<ContractClass>>,
 }
 
 impl<S: StateReader> VersionedState<S> {
@@ -336,7 +336,10 @@ impl<S: StateReader> StateReader for VersionedStateProxy<S> {
         }
     }
 
-    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
+    fn get_compiled_contract_class(
+        &self,
+        class_hash: ClassHash,
+    ) -> StateResult<Arc<ContractClass>> {
         let mut state = self.state();
         match state.compiled_contract_classes.read(self.tx_index, class_hash) {
             Some(value) => Ok(value),

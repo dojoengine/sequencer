@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV1};
 use blockifier::state::errors::StateError;
 use blockifier::state::global_cache::GlobalContractCache;
@@ -43,7 +45,7 @@ impl PapyrusReader {
     fn get_compiled_contract_class_inner(
         &self,
         class_hash: ClassHash,
-    ) -> StateResult<ContractClass> {
+    ) -> StateResult<Arc<ContractClass>> {
         let state_number = StateNumber(self.latest_block);
         let class_declaration_block_number = self
             .reader()?
@@ -63,7 +65,9 @@ impl PapyrusReader {
                      inconsistent.",
                 );
 
-            return Ok(ContractClass::V1(ContractClassV1::try_from(casm_contract_class)?));
+            return Ok(Arc::new(ContractClass::V1(ContractClassV1::try_from(
+                casm_contract_class,
+            )?)));
         }
 
         let v0_contract_class = self
@@ -74,7 +78,7 @@ impl PapyrusReader {
 
         match v0_contract_class {
             Some(starknet_api_contract_class) => {
-                Ok(ContractClassV0::try_from(starknet_api_contract_class)?.into())
+                Ok(Arc::new(ContractClassV0::try_from(starknet_api_contract_class)?.into()))
             }
             None => Err(StateError::UndeclaredClassHash(class_hash)),
         }
@@ -121,7 +125,10 @@ impl StateReader for PapyrusReader {
         }
     }
 
-    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
+    fn get_compiled_contract_class(
+        &self,
+        class_hash: ClassHash,
+    ) -> StateResult<Arc<ContractClass>> {
         // Assumption: the global cache is cleared upon reverted blocks.
         let contract_class = self.global_class_hash_to_class.get(&class_hash);
 

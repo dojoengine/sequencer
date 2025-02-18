@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use blockifier::blockifier::block::BlockInfo;
 use blockifier::context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
@@ -43,7 +45,10 @@ impl BlockifierStateReader for TestStateReader {
         self.blockifier_state_reader.get_class_hash_at(contract_address)
     }
 
-    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
+    fn get_compiled_contract_class(
+        &self,
+        class_hash: ClassHash,
+    ) -> StateResult<Arc<ContractClass>> {
         self.blockifier_state_reader.get_compiled_contract_class(class_hash)
     }
 

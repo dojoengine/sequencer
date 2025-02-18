@@ -16,9 +16,7 @@ use crate::execution::call_info::{CallExecution, CallInfo};
 use crate::execution::contract_class::ContractClassV0;
 use crate::execution::deprecated_syscalls::hint_processor::DeprecatedSyscallHintProcessor;
 use crate::execution::entry_point::{
-    CallEntryPoint,
-    EntryPointExecutionContext,
-    EntryPointExecutionResult,
+    CallEntryPoint, EntryPointExecutionContext, EntryPointExecutionResult,
 };
 use crate::execution::errors::{PostExecutionError, PreExecutionError};
 use crate::execution::execution_utils::{read_execution_retdata, Args, ReadOnlySegments};
@@ -43,7 +41,7 @@ pub const CAIRO0_BUILTINS_NAMES: [BuiltinName; 6] = [
 /// Executes a specific call to a contract entry point and returns its output.
 pub fn execute_entry_point_call(
     call: CallEntryPoint,
-    contract_class: ContractClassV0,
+    contract_class: &ContractClassV0,
     state: &mut dyn State,
     resources: &mut ExecutionResources,
     context: &mut EntryPointExecutionContext,
@@ -77,7 +75,7 @@ pub fn execute_entry_point_call(
 
 pub fn initialize_execution_context<'a>(
     call: &CallEntryPoint,
-    contract_class: ContractClassV0,
+    contract_class: &ContractClassV0,
     state: &'a mut dyn State,
     resources: &'a mut ExecutionResources,
     context: &'a mut EntryPointExecutionContext,

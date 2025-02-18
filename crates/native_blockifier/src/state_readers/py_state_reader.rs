@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV1};
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{StateReader, StateResult};
@@ -7,9 +9,7 @@ use starknet_api::state::StorageKey;
 use starknet_types_core::felt::Felt;
 
 use crate::errors::{
-    NativeBlockifierError,
-    NativeBlockifierInputError,
-    NativeBlockifierResult,
+    NativeBlockifierError, NativeBlockifierInputError, NativeBlockifierResult,
     UndeclaredClassHashError,
 };
 use crate::py_utils::PyFelt;
@@ -64,8 +64,11 @@ impl StateReader for PyStateReader {
         .map_err(|err| StateError::StateReadError(err.to_string()))
     }
 
-    fn get_compiled_contract_class(&self, class_hash: ClassHash) -> StateResult<ContractClass> {
-        Python::with_gil(|py| -> Result<ContractClass, PyErr> {
+    fn get_compiled_contract_class(
+        &self,
+        class_hash: ClassHash,
+    ) -> StateResult<Arc<ContractClass>> {
+        Python::with_gil(|py| -> Result<Arc<ContractClass>, PyErr> {
             let args = (PyFelt::from(class_hash),);
             let py_raw_compiled_class: PyRawCompiledClass = self
                 .state_reader_proxy
@@ -73,7 +76,7 @@ impl StateReader for PyStateReader {
                 .call_method1("get_raw_compiled_class", args)?
                 .extract()?;
 
-            Ok(ContractClass::try_from(py_raw_compiled_class)?)
+            Ok(Arc::new(ContractClass::try_from(py_raw_compiled_class)?))
         })
         .map_err(|err| {
             if Python::with_gil(|py| err.is_instance_of::<UndeclaredClassHashError>(py)) {
