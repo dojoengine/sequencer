@@ -15,17 +15,10 @@ use std::sync::Arc;
 
 use cairo_lang_casm::hints::{CoreHint, CoreHintBase, Hint};
 use cairo_lang_casm::operand::{
-    BinOpOperand,
-    CellRef,
-    DerefOrImmediate,
-    Operation,
-    Register,
-    ResOperand,
+    BinOpOperand, CellRef, DerefOrImmediate, Operation, Register, ResOperand,
 };
 use cairo_lang_starknet_classes::casm_contract_class::{
-    CasmContractClass,
-    CasmContractEntryPoint,
-    CasmContractEntryPoints,
+    CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints,
 };
 use cairo_lang_starknet_classes::NestedIntList;
 use cairo_lang_utils::bigint::BigUintAsHex;
@@ -38,112 +31,40 @@ use rand_chacha::ChaCha8Rng;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use starknet_api::block::{
-    Block,
-    BlockBody,
-    BlockHash,
-    BlockHeader,
-    BlockNumber,
-    BlockSignature,
-    BlockStatus,
-    BlockTimestamp,
-    GasPrice,
-    GasPricePerToken,
-    StarknetVersion,
+    Block, BlockBody, BlockHash, BlockHeader, BlockNumber, BlockSignature, BlockStatus,
+    BlockTimestamp, GasPrice, GasPricePerToken, StarknetVersion,
 };
 use starknet_api::core::{
-    ClassHash,
-    CompiledClassHash,
-    ContractAddress,
-    EntryPointSelector,
-    EthAddress,
-    EventCommitment,
-    GlobalRoot,
-    Nonce,
-    ReceiptCommitment,
-    SequencerContractAddress,
-    StateDiffCommitment,
+    ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, EthAddress, EventCommitment,
+    GlobalRoot, Nonce, ReceiptCommitment, SequencerContractAddress, StateDiffCommitment,
     TransactionCommitment,
 };
 use starknet_api::crypto::utils::Signature;
 use starknet_api::data_availability::{DataAvailabilityMode, L1DataAvailabilityMode};
 use starknet_api::deprecated_contract_class::{
-    ConstructorType,
-    ContractClass as DeprecatedContractClass,
-    ContractClassAbiEntry,
-    EntryPoint as DeprecatedEntryPoint,
-    EntryPointOffset,
-    EntryPointType as DeprecatedEntryPointType,
-    EventAbiEntry,
-    EventType,
-    FunctionAbiEntry,
-    FunctionStateMutability,
-    FunctionType,
-    L1HandlerType,
-    Program,
-    StructAbiEntry,
-    StructMember,
-    StructType,
-    TypedParameter,
+    ConstructorType, ContractClass as DeprecatedContractClass, ContractClassAbiEntry,
+    EntryPoint as DeprecatedEntryPoint, EntryPointOffset,
+    EntryPointType as DeprecatedEntryPointType, EventAbiEntry, EventType, FunctionAbiEntry,
+    FunctionStateMutability, FunctionType, L1HandlerType, Program, StructAbiEntry, StructMember,
+    StructType, TypedParameter,
 };
 use starknet_api::felt;
 use starknet_api::hash::{PoseidonHash, StarkHash};
 use starknet_api::state::{
-    ContractClass,
-    EntryPoint,
-    EntryPointType,
-    FunctionIndex,
-    StateDiff,
-    StorageKey,
-    ThinStateDiff,
+    ContractClass, EntryPoint, EntryPointType, FunctionIndex, StateDiff, StorageKey, ThinStateDiff,
 };
 use starknet_api::transaction::{
-    AccountDeploymentData,
-    Builtin,
-    Calldata,
-    ContractAddressSalt,
-    DeclareTransaction,
-    DeclareTransactionOutput,
-    DeclareTransactionV0V1,
-    DeclareTransactionV2,
-    DeclareTransactionV3,
-    DeployAccountTransaction,
-    DeployAccountTransactionOutput,
-    DeployAccountTransactionV1,
-    DeployAccountTransactionV3,
-    DeployTransaction,
-    DeployTransactionOutput,
-    Event,
-    EventContent,
-    EventData,
-    EventIndexInTransactionOutput,
-    EventKey,
-    ExecutionResources,
-    Fee,
-    GasVector,
-    InvokeTransaction,
-    InvokeTransactionOutput,
-    InvokeTransactionV0,
-    InvokeTransactionV1,
-    InvokeTransactionV3,
-    L1HandlerTransaction,
-    L1HandlerTransactionOutput,
-    L1ToL2Payload,
-    L2ToL1Payload,
-    MessageToL1,
-    MessageToL2,
-    PaymasterData,
-    Resource,
-    ResourceBounds,
-    ResourceBoundsMapping,
-    RevertedTransactionExecutionStatus,
-    Tip,
-    Transaction,
-    TransactionExecutionStatus,
-    TransactionHash,
-    TransactionOffsetInBlock,
-    TransactionOutput,
-    TransactionSignature,
-    TransactionVersion,
+    AccountDeploymentData, Builtin, Calldata, ContractAddressSalt, DeclareTransaction,
+    DeclareTransactionOutput, DeclareTransactionV0V1, DeclareTransactionV2, DeclareTransactionV3,
+    DeployAccountTransaction, DeployAccountTransactionOutput, DeployAccountTransactionV1,
+    DeployAccountTransactionV3, DeployTransaction, DeployTransactionOutput, Event, EventContent,
+    EventData, EventIndexInTransactionOutput, EventKey, ExecutionResources, Fee, GasVector,
+    InvokeTransaction, InvokeTransactionOutput, InvokeTransactionV0, InvokeTransactionV1,
+    InvokeTransactionV3, L1HandlerTransaction, L1HandlerTransactionOutput, L1ToL2Payload,
+    L2ToL1Payload, MessageToL1, MessageToL2, PaymasterData, Resource, ResourceBounds,
+    ResourceBoundsMapping, RevertedTransactionExecutionStatus, Tip, Transaction,
+    TransactionExecutionStatus, TransactionHash, TransactionOffsetInBlock, TransactionOutput,
+    TransactionSignature, TransactionVersion,
 };
 use starknet_types_core::felt::Felt;
 
@@ -691,12 +612,12 @@ auto_impl_get_test_instance! {
     pub struct L1ToL2Payload(pub Vec<Felt>);
     pub struct L2ToL1Payload(pub Vec<Felt>);
     pub struct MessageToL1 {
-        pub to_address: EthAddress,
+        pub to_address: Felt,
         pub payload: L2ToL1Payload,
         pub from_address: ContractAddress,
     }
     pub struct MessageToL2 {
-        pub from_address: EthAddress,
+        pub from_address: Felt,
         pub payload: L1ToL2Payload,
     }
     pub struct Nonce(pub Felt);

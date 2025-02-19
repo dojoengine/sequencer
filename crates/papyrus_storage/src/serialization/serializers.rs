@@ -7,9 +7,7 @@ use std::sync::Arc;
 use byteorder::BigEndian;
 use cairo_lang_casm::hints::Hint;
 use cairo_lang_starknet_classes::casm_contract_class::{
-    CasmContractClass,
-    CasmContractEntryPoint,
-    CasmContractEntryPoints,
+    CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints,
 };
 use cairo_lang_starknet_classes::NestedIntList;
 use cairo_lang_utils::bigint::BigUintAsHex;
@@ -19,108 +17,39 @@ use num_bigint::BigUint;
 use parity_scale_codec::{Decode, Encode};
 use primitive_types::H160;
 use starknet_api::block::{
-    BlockHash,
-    BlockNumber,
-    BlockSignature,
-    BlockStatus,
-    BlockTimestamp,
-    GasPrice,
-    GasPricePerToken,
-    StarknetVersion,
+    BlockHash, BlockNumber, BlockSignature, BlockStatus, BlockTimestamp, GasPrice,
+    GasPricePerToken, StarknetVersion,
 };
 use starknet_api::core::{
-    ClassHash,
-    CompiledClassHash,
-    ContractAddress,
-    EntryPointSelector,
-    EthAddress,
-    EventCommitment,
-    GlobalRoot,
-    Nonce,
-    PatriciaKey,
-    ReceiptCommitment,
-    SequencerContractAddress,
-    StateDiffCommitment,
+    ClassHash, CompiledClassHash, ContractAddress, EntryPointSelector, EventCommitment, GlobalRoot,
+    Nonce, PatriciaKey, ReceiptCommitment, SequencerContractAddress, StateDiffCommitment,
     TransactionCommitment,
 };
 use starknet_api::crypto::utils::Signature;
 use starknet_api::data_availability::{DataAvailabilityMode, L1DataAvailabilityMode};
 use starknet_api::deprecated_contract_class::{
-    ConstructorType,
-    ContractClass as DeprecatedContractClass,
-    ContractClassAbiEntry,
-    EntryPoint as DeprecatedEntryPoint,
-    EntryPointOffset,
-    EntryPointType as DeprecatedEntryPointType,
-    EventAbiEntry,
-    EventType,
-    FunctionAbiEntry,
-    FunctionStateMutability,
-    FunctionType,
-    L1HandlerType,
-    Program,
-    StructAbiEntry,
-    StructMember,
-    StructType,
-    TypedParameter,
+    ConstructorType, ContractClass as DeprecatedContractClass, ContractClassAbiEntry,
+    EntryPoint as DeprecatedEntryPoint, EntryPointOffset,
+    EntryPointType as DeprecatedEntryPointType, EventAbiEntry, EventType, FunctionAbiEntry,
+    FunctionStateMutability, FunctionType, L1HandlerType, Program, StructAbiEntry, StructMember,
+    StructType, TypedParameter,
 };
 use starknet_api::hash::{PoseidonHash, StarkHash};
 use starknet_api::state::{
-    ContractClass,
-    EntryPoint,
-    EntryPointType,
-    FunctionIndex,
-    StorageKey,
-    ThinStateDiff,
+    ContractClass, EntryPoint, EntryPointType, FunctionIndex, StorageKey, ThinStateDiff,
 };
 use starknet_api::transaction::{
-    AccountDeploymentData,
-    Builtin,
-    Calldata,
-    ContractAddressSalt,
-    DeclareTransaction,
-    DeclareTransactionOutput,
-    DeclareTransactionV0V1,
-    DeclareTransactionV2,
-    DeclareTransactionV3,
-    DeployAccountTransaction,
-    DeployAccountTransactionOutput,
-    DeployAccountTransactionV1,
-    DeployAccountTransactionV3,
-    DeployTransaction,
-    DeployTransactionOutput,
-    Event,
-    EventContent,
-    EventData,
-    EventIndexInTransactionOutput,
-    EventKey,
-    ExecutionResources,
-    Fee,
-    GasVector,
-    InvokeTransaction,
-    InvokeTransactionOutput,
-    InvokeTransactionV0,
-    InvokeTransactionV1,
-    InvokeTransactionV3,
-    L1HandlerTransaction,
-    L1HandlerTransactionOutput,
-    L1ToL2Payload,
-    L2ToL1Payload,
-    MessageToL1,
-    MessageToL2,
-    PaymasterData,
-    Resource,
-    ResourceBounds,
-    ResourceBoundsMapping,
-    RevertedTransactionExecutionStatus,
-    Tip,
-    Transaction,
-    TransactionExecutionStatus,
-    TransactionHash,
-    TransactionOffsetInBlock,
-    TransactionOutput,
-    TransactionSignature,
-    TransactionVersion,
+    AccountDeploymentData, Builtin, Calldata, ContractAddressSalt, DeclareTransaction,
+    DeclareTransactionOutput, DeclareTransactionV0V1, DeclareTransactionV2, DeclareTransactionV3,
+    DeployAccountTransaction, DeployAccountTransactionOutput, DeployAccountTransactionV1,
+    DeployAccountTransactionV3, DeployTransaction, DeployTransactionOutput, Event, EventContent,
+    EventData, EventIndexInTransactionOutput, EventKey, ExecutionResources, Fee, GasVector,
+    InvokeTransaction, InvokeTransactionOutput, InvokeTransactionV0, InvokeTransactionV1,
+    InvokeTransactionV3, L1HandlerTransaction, L1HandlerTransactionOutput, L1ToL2Payload,
+    L2ToL1Payload, MessageToL1, MessageToL2, PaymasterData, Resource, ResourceBounds,
+    ResourceBoundsMapping, RevertedTransactionExecutionStatus, Tip, Transaction,
+    TransactionExecutionStatus, TransactionHash, TransactionOffsetInBlock, TransactionOutput,
+    TransactionSignature, TransactionVersion,
 };
 use starknet_types_core::felt::Felt;
 use tracing::warn;
@@ -128,11 +57,7 @@ use tracing::warn;
 use crate::body::events::EventIndex;
 use crate::body::TransactionIndex;
 use crate::compression_utils::{
-    compress,
-    decompress,
-    decompress_from_reader,
-    serialize_and_compress,
-    IsCompressed,
+    compress, decompress, decompress_from_reader, serialize_and_compress, IsCompressed,
 };
 use crate::db::serialization::{StorageSerde, StorageSerdeError};
 use crate::db::table_types::NoValue;
@@ -250,8 +175,8 @@ auto_storage_serde! {
         External = 1,
         L1Handler = 2,
     }
-    // TODO(dan): consider implementing directly with no H160 dependency.
-    pub struct EthAddress(pub H160);
+    // // TODO(dan): consider implementing directly with no H160 dependency.
+    // pub struct EthAddress(pub H160);
     pub struct EventAbiEntry {
         pub data: Vec<TypedParameter>,
         pub keys: Vec<TypedParameter>,
@@ -318,12 +243,12 @@ auto_storage_serde! {
         BaseLayerBlock = 6,
     }
     pub struct MessageToL1 {
-        pub to_address: EthAddress,
+        pub to_address: Felt,
         pub payload: L2ToL1Payload,
         pub from_address: ContractAddress,
     }
     pub struct MessageToL2 {
-        pub from_address: EthAddress,
+        pub from_address: Felt,
         pub payload: L1ToL2Payload,
     }
     pub enum NestedIntList {
