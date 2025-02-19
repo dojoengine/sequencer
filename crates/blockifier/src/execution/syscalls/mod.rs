@@ -35,6 +35,9 @@ pub mod secp;
 #[cfg(test)]
 #[path = "syscalls_test.rs"]
 pub mod syscalls_test;
+#[cfg(test)]
+#[path = "syscalls_test_katana.rs"]
+pub mod syscalls_test_katana;
 
 pub type SyscallResult<T> = Result<T, SyscallExecutionError>;
 pub type WriteResponseResult = SyscallResult<()>;
