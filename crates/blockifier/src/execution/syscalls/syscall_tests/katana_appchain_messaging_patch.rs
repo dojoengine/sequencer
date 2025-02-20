@@ -9,11 +9,11 @@ use crate::execution::call_info::{CallExecution, MessageToL1, OrderedL2ToL1Messa
 use crate::execution::entry_point::CallEntryPoint;
 use crate::test_utils::contracts::FeatureContract;
 use crate::test_utils::initial_test_state::test_state;
-use crate::test_utils::{trivial_external_entry_point_new, CairoVersion, BALANCE};
+use crate::test_utils::{trivial_external_entry_point_new, CairoVersion, RunnableCairo1, BALANCE};
 
 #[test]
 fn test_send_message_to_l1_with_longer_than_eth_address() {
-    let test_contract = FeatureContract::TestContract(CairoVersion::Cairo1);
+    let test_contract = FeatureContract::TestContract(CairoVersion::Cairo1(RunnableCairo1::Casm));
     let chain_info = &ChainInfo::create_for_testing();
     let mut state = test_state(chain_info, BALANCE, &[(test_contract, 1)]);
 
