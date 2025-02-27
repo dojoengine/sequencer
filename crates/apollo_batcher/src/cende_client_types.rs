@@ -26,7 +26,6 @@ use starknet_api::core::{
     CompiledClassHash,
     ContractAddress,
     EntryPointSelector,
-    EthAddress,
     Nonce,
 };
 use starknet_api::data_availability::L1DataAvailabilityMode;
@@ -39,6 +38,7 @@ use starknet_api::rpc_transaction::{
     RpcDeployAccountTransaction,
     RpcInvokeTransaction,
 };
+use starknet_types_core::felt::Felt;
 use starknet_api::transaction::fields::{
     AccountDeploymentData,
     AllResourceBounds,
@@ -64,7 +64,7 @@ pub struct L1ToL2Nonce(pub StarkHash);
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone, Eq, PartialEq)]
 pub struct L1ToL2Message {
-    pub from_address: EthAddress,
+    pub from_address: Felt,
     pub to_address: ContractAddress,
     pub selector: EntryPointSelector,
     pub payload: L1ToL2Payload,
@@ -91,7 +91,7 @@ impl From<starknet_api::transaction::L1HandlerTransaction> for L1ToL2Message {
 #[derive(Debug, Default, Deserialize, Serialize, Clone, Eq, PartialEq)]
 pub struct L2ToL1Message {
     pub from_address: ContractAddress,
-    pub to_address: EthAddress,
+    pub to_address: Felt,
     pub payload: L2ToL1Payload,
 }
 

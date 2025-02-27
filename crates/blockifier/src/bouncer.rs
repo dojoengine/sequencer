@@ -598,7 +598,7 @@ fn vm_resource_to_gas_amount(amount: usize, gas_per_unit: u64, name: &str) -> Ga
     GasAmount(gas)
 }
 
-fn n_steps_to_gas(n_steps: usize, versioned_constants: &VersionedConstants) -> GasAmount {
+pub fn n_steps_to_gas(n_steps: usize, versioned_constants: &VersionedConstants) -> GasAmount {
     let gas_per_step = versioned_constants.os_constants.gas_costs.base.step_gas_cost;
     vm_resource_to_gas_amount(n_steps, gas_per_step, "steps")
 }
