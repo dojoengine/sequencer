@@ -305,7 +305,7 @@ impl Bouncer {
     }
 }
 
-fn n_steps_to_sierra_gas(n_steps: usize, versioned_constants: &VersionedConstants) -> GasAmount {
+pub fn n_steps_to_sierra_gas(n_steps: usize, versioned_constants: &VersionedConstants) -> GasAmount {
     let n_steps_u64 = u64_from_usize(n_steps);
     let gas_per_step = versioned_constants.os_constants.gas_costs.base.step_gas_cost;
     let n_steps_gas_cost = n_steps_u64.checked_mul(gas_per_step).unwrap_or_else(|| {
