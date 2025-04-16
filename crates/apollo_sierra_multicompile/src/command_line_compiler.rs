@@ -1,4 +1,5 @@
 use std::io::Write;
+#[cfg(target_family = "unix")]
 use std::os::unix::process::ExitStatusExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -135,6 +136,7 @@ fn compile_with_args(
     let compile_output = command.output()?;
 
     if !compile_output.status.success() {
+        #[cfg(target_family = "unix")]
         let signal_info = match compile_output.status.signal() {
             Some(9) => {
                 "SIGKILL (9): Process was forcefully killed (for example, because it exceeded CPU \
@@ -147,6 +149,9 @@ fn compile_with_args(
             }
             Some(sig) => &format!("Process terminated by unexpected signal: {}", sig),
         };
+
+        #[cfg(not(target_family = "unix"))]
+        let signal_info = "Process exited with non-zero status";
 
         let stderr_output = String::from_utf8(compile_output.stderr)
             .unwrap_or_else(|_| "Failed to decode stderr output".to_string());
