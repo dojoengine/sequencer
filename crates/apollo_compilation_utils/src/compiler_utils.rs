@@ -1,4 +1,5 @@
 use std::io::Write;
+#[cfg(target_family = "unix")]
 // TODO(Avi, 01/06/2025): Adapt this import to make the crate compile on windows.
 use std::os::unix::process::ExitStatusExt;
 use std::path::Path;
@@ -35,6 +36,7 @@ pub fn compile_with_args(
     // Run the compile process.
     let compile_output = command.output()?;
 
+    #[cfg(target_family = "unix")]
     if !compile_output.status.success() {
         let signal_info = match compile_output.status.signal() {
             Some(9) => {
@@ -48,6 +50,9 @@ pub fn compile_with_args(
             }
             Some(sig) => &format!("Process terminated by unexpected signal: {}", sig),
         };
+
+        #[cfg(not(target_family = "unix"))]
+        let signal_info = "Process exited with non-zero status";
 
         let stderr_output = String::from_utf8(compile_output.stderr)
             .unwrap_or_else(|_| "Failed to decode stderr output".to_string());
