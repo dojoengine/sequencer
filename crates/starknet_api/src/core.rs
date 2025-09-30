@@ -9,7 +9,6 @@ use num_traits::ToPrimitive;
 use primitive_types::H160;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use size_of::SizeOf;
 use starknet_types_core::felt::{Felt, NonZeroFelt};
 use starknet_types_core::hash::{Pedersen, StarkHash as CoreStarkHash};
 
@@ -121,7 +120,6 @@ pub const BLOCK_HASH_TABLE_ADDRESS: ContractAddress = ContractAddress(PatriciaKe
     PartialOrd,
     Ord,
     derive_more::Deref,
-    SizeOf,
 )]
 pub struct ContractAddress(pub PatriciaKey);
 
@@ -210,7 +208,6 @@ pub fn calculate_contract_address(
     Ord,
     derive_more::Display,
     derive_more::Deref,
-    SizeOf,
 )]
 pub struct ClassHash(pub StarkHash);
 
@@ -234,7 +231,6 @@ impl From<ClassHash> for Felt {
     PartialOrd,
     Ord,
     derive_more::Display,
-    SizeOf,
 )]
 pub struct CompiledClassHash(pub StarkHash);
 
@@ -258,7 +254,6 @@ impl From<CompiledClassHash> for Felt {
     PartialOrd,
     Ord,
     derive_more::Deref,
-    SizeOf,
 )]
 pub struct Nonce(pub Felt);
 
@@ -387,7 +382,6 @@ pub struct StateDiffCommitment(pub PoseidonHash);
     PartialOrd,
     Ord,
     derive_more:: Deref,
-    SizeOf,
 )]
 #[display(fmt = "{}", "_0.to_fixed_hex_string()")]
 pub struct PatriciaKey(StarkHash);
